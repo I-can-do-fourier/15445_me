@@ -124,6 +124,17 @@ class Trie {
   // Remove the key from the trie. If the key does not exist, return the original trie.
   // Otherwise, returns the new trie.
   auto Remove(std::string_view key) const -> Trie;
+
+  template <class T>
+  auto Get_hp(std::shared_ptr<const TrieNode> node, std::string_view key, std::string_view::size_type index) const
+      -> const T *;
 };
+
+template <class T>
+auto Put_hp(std::shared_ptr<const TrieNode> n_old, std::string_view key, std::shared_ptr<T> value,
+            std::string_view::size_type index) -> std::shared_ptr<const TrieNode>;
+
+auto Remove_Hp(std::shared_ptr<const TrieNode> n_old, std::string_view key, std::string_view::size_type index)
+    -> std::shared_ptr<const TrieNode>;
 
 }  // namespace bustub

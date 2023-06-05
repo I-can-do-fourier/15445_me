@@ -13,6 +13,7 @@ auto TrieStore::Get(std::string_view key) -> std::optional<ValueGuard<T>> {
   //     root. Otherwise, return std::nullopt.
   // throw NotImplementedException("TrieStore::Get is not implemented.");
 
+  //这一步是否真的需要上锁?
   root_lock_.lock();
 
   Trie root_store = root_;
@@ -33,6 +34,13 @@ void TrieStore::Put(std::string_view key, T value) {
   // You will need to ensure there is only one writer at a time. Think of how you can achieve this.
   // The logic should be somehow similar to `TrieStore::Get`.
   // throw NotImplementedException("TrieStore::Put is not implemented.");
+
+  /**
+   *
+   *   写加上写锁,再去拿Trie。如果先拿Trie，而同时有另一个线程也拿到了这个Trie,并加上写锁更新
+   *   等当前线程获得写锁并更新时,之前拿到的Trie已经过时了
+   *
+   */
 
   write_lock_.lock();
 

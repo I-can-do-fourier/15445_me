@@ -50,7 +50,7 @@ auto Trie::Put(std::string_view key, T value) const -> Trie {
   auto trie = Trie();
   // auto k=std::move(value);
 
-  //先把no-copy 的value交给shared_ptr.
+  //需要先把no-copy的value(std::unique_ptr<int>,MoveBlocked)交给shared_ptr(对能copy的value也使用)
   std::shared_ptr<T> v = std::make_shared<T>(std::move(value));
   // std::shared_ptr<T> v(&value);
   trie.root_ = PutHp(root_, key, v, 0);
@@ -79,13 +79,14 @@ auto PutHp(std::shared_ptr<const TrieNode> n_old, std::string_view key, std::sha
   if (index == key.size()) {
     std::shared_ptr<const TrieNodeWithValue<T>> new_value = nullptr;
     if (n_old == nullptr)
-      new_value = std::make_shared<const TrieNodeWithValue<T>>(value);
+      new_value = std::make_shared<const TrieNodeWithValue<T>>(value);//新增一个node
     else
-      new_value = std::make_shared<const TrieNodeWithValue<T>>(n_old->children_, value);
+      new_value = std::make_shared<const TrieNodeWithValue<T>>(n_old->children_, value);//修改一个node
+
     return new_value;
   }
 
-  std::unique_ptr<TrieNode> new_value = nullptr;
+  std::unique_ptr<TrieNode> new_value = nullptr;//创建新node
   char k = key.at(index);
   if (n_old == nullptr) {
     new_value = std::make_unique<TrieNode>();
@@ -98,7 +99,7 @@ auto PutHp(std::shared_ptr<const TrieNode> n_old, std::string_view key, std::sha
     std::shared_ptr<const TrieNode> child = nullptr;
 
     if (n_old->children_.find(k) != n_old->children_.end()) child = n_old->children_.at(k);
-    new_value->children_[k] = PutHp(child, key, value, index + 1);
+    new_value->children_[k] = PutHp(child, key, value, index + 1);//将对应的路径指向修改后的子node
   }
 
   return std::move(new_value);

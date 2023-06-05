@@ -25,13 +25,14 @@ auto Trie::GetHp(std::shared_ptr<const TrieNode> node, std::string_view key, std
 
   if (node == nullptr) return nullptr;
   if (index >= key.size()) {
-    const TrieNodeWithValue<T> *res = dynamic_cast<const TrieNodeWithValue<T> *>(node.get());
+    const TrieNodeWithValue<T> *res = dynamic_cast<const TrieNodeWithValue<T> *>(node.get());//父类转子类
 
-    if (res == nullptr) return nullptr;
+    if (res == nullptr) return nullptr;//没找到，返回nullptr
 
     return res->value_.get();
   }
 
+  //找下一个节点
   char k = key.at(index);
   if (node->children_.find(k) != node->children_.end()) return GetHp<T>(node->children_.at(k), key, index + 1);
 
@@ -49,6 +50,7 @@ auto Trie::Put(std::string_view key, T value) const -> Trie {
   auto trie = Trie();
   // auto k=std::move(value);
 
+  //先把no-copy 的value交给shared_ptr.
   std::shared_ptr<T> v = std::make_shared<T>(std::move(value));
   // std::shared_ptr<T> v(&value);
   trie.root_ = PutHp(root_, key, v, 0);
@@ -130,27 +132,31 @@ auto RemoveHp(std::shared_ptr<const TrieNode> n_old, std::string_view key, std::
 
   if (n_old == nullptr) return nullptr;
 
-  if (index == key.size()) {
+  if (index == key.size()) {      //找到了目标节点
+
+    //节点没有任何的child,直接删除
     if (n_old->children_.size() == 0) return nullptr;
 
+    //有child,降级为普通TrieNode，承接下方的children
     std::shared_ptr<const TrieNode> new_value = std::make_shared<const TrieNode>(n_old->children_);
     return new_value;
   }
 
   char k = key.at(index);
-  std::unique_ptr<TrieNode> new_value = n_old->Clone();
+  std::unique_ptr<TrieNode> new_value = n_old->Clone();//直接clone一份新的节点。和原节点共享children
 
   std::shared_ptr<const TrieNode> child = nullptr;
 
-  if (n_old->children_.find(k) != n_old->children_.end()) child = n_old->children_.at(k);
+  if (n_old->children_.find(k) != n_old->children_.end()) child = n_old->children_.at(k);//找到下一个遍历到的节点。
   std::shared_ptr<const TrieNode> sub = RemoveHp(child, key, index + 1);
 
   if (sub != nullptr)
-    new_value->children_[k] = sub;
+    new_value->children_[k] = sub;//sub是被修改过的child节点。要将new_value对应的路径指向该节点。
   else if (child != nullptr)
-    new_value->children_.erase(new_value->children_.find(k));
+    new_value->children_.erase(new_value->children_.find(k));//sub被删除了,需要将new_value对应位置清空。
 
-  if (new_value->children_.size() == 0 && (!new_value->is_value_node_)) return nullptr;
+  if (new_value->children_.size() == 0 && (!new_value->is_value_node_)) return nullptr;//new_value不含任何的sub,且new_value本身
+                                                                                       //不承载value,应当被废弃删除。
 
   return std::move(new_value);
 }

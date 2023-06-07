@@ -72,7 +72,7 @@ struct LRUKNodeComparator {
   size_t k_;
   LRUKNodeComparator(std::unordered_map<frame_id_t, LRUKNode> &node_store,  size_t k) : node_store_(node_store),k_(k) {}
 
-  bool operator()(const size_t &a, const size_t &b) const {
+  bool operator()(const frame_id_t &a, const frame_id_t &b) const {
     LRUKNode& nodeA = node_store_.at(a);
     LRUKNode& nodeB = node_store_.at(b);
     // Compare nodeA and nodeB using your custom logic
@@ -218,7 +218,7 @@ class LRUKReplacer {
 
   //self_defined
 
-  std::set<size_t, LRUKNodeComparator> pq_{LRUKNodeComparator(node_store_,k_)};
+  std::set<frame_id_t, LRUKNodeComparator> pq_{LRUKNodeComparator(node_store_,k_)};
 
 
 };

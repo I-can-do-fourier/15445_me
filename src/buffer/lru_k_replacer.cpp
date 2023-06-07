@@ -54,7 +54,27 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
 
 }
 
-void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {}
+void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
+
+  BUSTUB_ASSERT(frame_id>=0&&(uint32_t)frame_id<=replacer_size_,"invalid frame id");
+
+  if(node_store_.find(frame_id)==node_store_.end())return;
+  if(node_store_.at(frame_id).GetEvictable()==set_evictable)return;
+
+  LRUKNode& node=node_store_[frame_id];
+  node.GetEvictable()=set_evictable;
+
+  if(set_evictable){
+
+    pq_.insert(frame_id);
+    curr_size_++;
+  }else {
+
+    pq_.erase(frame_id);
+    curr_size_--;
+  }
+
+}
 
 void LRUKReplacer::Remove(frame_id_t frame_id) {}
 

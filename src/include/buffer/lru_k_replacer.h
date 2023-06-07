@@ -80,8 +80,8 @@ struct LRUKNodeComparator {
     // Return false otherwise
     // Example: Compare based on the values of k_
     if(nodeA.GetHistory().size()<k_&&nodeB.GetHistory().size()<k_)return nodeA.GetHistory().front()<nodeB.GetHistory().front();
-    else if(nodeA.GetHistory().size()<k_)return -1;
-    else if(nodeB.GetHistory().size()<k_)return 1;
+    else if(nodeA.GetHistory().size()<k_)return true;
+    else if(nodeB.GetHistory().size()<k_)return false;
     else return nodeA.GetHistory().front()<nodeB.GetHistory().front();
   }
 

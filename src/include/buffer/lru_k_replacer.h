@@ -15,13 +15,21 @@
 #include <limits>
 #include <list>
 #include <mutex>  // NOLINT
+#include <set>
 #include <unordered_map>
 #include <vector>
 
 #include "common/config.h"
 #include "common/macros.h"
 
+#include "queue"
+
 namespace bustub {
+
+class LRUKNode;
+
+//struct LRUKNodeComparator;
+
 
 enum class AccessType { Unknown = 0, Get, Scan };
 
@@ -30,10 +38,53 @@ class LRUKNode {
   /** History of last seen K timestamps of this page. Least recent timestamp stored in front. */
   // Remove maybe_unused if you start using them. Feel free to change the member variables as you want.
 
-  [[maybe_unused]] std::list<size_t> history_;
-  [[maybe_unused]] size_t k_;
-  [[maybe_unused]] frame_id_t fid_;
-  [[maybe_unused]] bool is_evictable_{false};
+//  [[maybe_unused]] std::list<size_t> history_;
+//  [[maybe_unused]] size_t k_;
+//  [[maybe_unused]] frame_id_t fid_;
+//  [[maybe_unused]] bool is_evictable_{false};
+
+  std::list<size_t> history_;
+  size_t k_;
+  frame_id_t fid_;
+  bool is_evictable_{false};
+
+
+ public:
+  std::list<size_t>& GetHistory() {
+    return history_;
+  }
+
+  size_t& GetK() {
+    return k_;
+  }
+
+  frame_id_t& GetFrameID() {
+    return fid_;
+  }
+
+  bool& GetEvictable() {
+    return is_evictable_;
+  }
+};
+
+struct LRUKNodeComparator {
+  std::unordered_map<frame_id_t, LRUKNode> &node_store_;
+  size_t k_;
+  LRUKNodeComparator(std::unordered_map<frame_id_t, LRUKNode> &node_store,  size_t k) : node_store_(node_store),k_(k) {}
+
+  bool operator()(const size_t &a, const size_t &b) const {
+    LRUKNode& nodeA = node_store_.at(a);
+    LRUKNode& nodeB = node_store_.at(b);
+    // Compare nodeA and nodeB using your custom logic
+    // Return true if nodeA is considered smaller than nodeB
+    // Return false otherwise
+    // Example: Compare based on the values of k_
+    if(nodeA.GetHistory().size()<k_&&nodeB.GetHistory().size()<k_)return nodeA.GetHistory().front()<nodeB.GetHistory().front();
+    else if(nodeA.GetHistory().size()<k_)return -1;
+    else if(nodeB.GetHistory().size()<k_)return 1;
+    else return nodeA.GetHistory().front()<nodeB.GetHistory().front();
+  }
+
 };
 
 /**
@@ -150,12 +201,28 @@ class LRUKReplacer {
  private:
   // TODO(student): implement me! You can replace these member variables as you like.
   // Remove maybe_unused if you start using them.
-  [[maybe_unused]] std::unordered_map<frame_id_t, LRUKNode> node_store_;
-  [[maybe_unused]] size_t current_timestamp_{0};
-  [[maybe_unused]] size_t curr_size_{0};
-  [[maybe_unused]] size_t replacer_size_;
-  [[maybe_unused]] size_t k_;
-  [[maybe_unused]] std::mutex latch_;
+//  [[maybe_unused]] std::unordered_map<frame_id_t, LRUKNode> node_store_;
+//  [[maybe_unused]] size_t current_timestamp_{0};
+//  [[maybe_unused]] size_t curr_size_{0};
+//  [[maybe_unused]] size_t replacer_size_;
+//  [[maybe_unused]] size_t k_;
+//  [[maybe_unused]] std::mutex latch_;
+
+
+  std::unordered_map<frame_id_t, LRUKNode> node_store_;
+  size_t current_timestamp_{0};
+  size_t curr_size_{0};
+  size_t replacer_size_;
+  size_t k_;
+  std::mutex latch_;
+
+  //self_defined
+
+  std::set<size_t, LRUKNodeComparator> pq_{LRUKNodeComparator(node_store_,k_)};
+
+
 };
+
+
 
 }  // namespace bustub

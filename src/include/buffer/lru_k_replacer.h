@@ -24,6 +24,44 @@
 
 #include "queue"
 
+
+
+//LOGGER
+
+#include <iostream>
+
+
+
+#ifndef LOG_H
+#define LOG_H
+
+extern bool g_enableLogging;
+
+template <typename T>
+void printArg(T arg)
+{
+  std::cout << arg;
+}
+
+template <typename T, typename... Args>
+void printArg(T arg, Args... args)
+{
+  std::cout << arg << ", ";
+  printArg(args...);
+}
+
+template <typename... Args>
+void LOG(Args... args)
+{
+
+  if(!g_enableLogging)return;
+  printArg(args...);
+  std::cout << std::endl;
+}
+
+#endif // LOG_H
+
+
 namespace bustub {
 
 class LRUKNode;

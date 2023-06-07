@@ -26,12 +26,24 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
 
  if(node_store_.find(frame_id)!=node_store_.end()){
 
-   pq_.erase(frame_id);
+
+
    LRUKNode& node=node_store_[frame_id];
+
+   /**
+    *
+    * 潜在的bug。如果先改变history，之后再erase，然后立即insert。在erase过程中，是不是
+    * 可能找不到这个element。
+    */
+
+   if(node.GetEvictable())pq_.erase(frame_id);
   //auto it=pq_.find(frame_id);
   node.GetHistory().push_back(current_timestamp_++);
   if(node.GetHistory().size()>9)node.GetHistory().pop_front();
-  pq_.insert(frame_id);
+
+  if(node.GetEvictable())pq_.insert(frame_id);
+
+
  }
  else {
 
@@ -44,7 +56,7 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
 
    node_store_[frame_id]=node;
 
-   pq_.insert(frame_id);
+   if(node.GetEvictable())pq_.insert(frame_id);
  }
 
  //add fields

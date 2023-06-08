@@ -23,6 +23,8 @@ namespace bustub {
 LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(num_frames), k_(k) {}
 
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
+
+  const std::lock_guard<std::mutex> lock(latch_);
   LOG("Evict");
   if(curr_size_==0)return false;
 
@@ -42,6 +44,8 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
 }
 
 void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType access_type) {
+
+  const std::lock_guard<std::mutex> lock(latch_);
   LOG("RecordAccess",frame_id);
  BUSTUB_ASSERT(frame_id>=0&&(uint32_t)frame_id<=replacer_size_,"invalid frame id");
 
@@ -89,6 +93,8 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
 }
 
 void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
+
+  const std::lock_guard<std::mutex> lock(latch_);
   LOG("SetEvictable",frame_id,set_evictable);
   BUSTUB_ASSERT(frame_id>=0&&(uint32_t)frame_id<=replacer_size_,"invalid frame id");
 
@@ -112,6 +118,8 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
 }
 
 void LRUKReplacer::Remove(frame_id_t frame_id) {
+
+  const std::lock_guard<std::mutex> lock(latch_);
   LOG("Remove",frame_id);
   BUSTUB_ASSERT(frame_id>=0&&(uint32_t)frame_id<=replacer_size_,"invalid frame id");
 

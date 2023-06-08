@@ -13,8 +13,8 @@
 #include "buffer/lru_k_replacer.h"
 #include "common/exception.h"
 
-#include "buffer/log_helper.h"
-
+//#include "buffer/log_helper.h"
+bool g_enableLogging = true;
 namespace bustub {
 
 
@@ -23,7 +23,7 @@ namespace bustub {
 LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(num_frames), k_(k) {}
 
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
-  LOG("Evict",frame_id);
+  LOG("Evict");
   if(curr_size_==0)return false;
 
   auto it=pq_.begin();
@@ -37,7 +37,7 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   pq_.erase(it);
   node_store_.erase(eid);
   curr_size_--;
-
+  LOG("Evict",eid);
   return true;
 }
 
@@ -121,14 +121,17 @@ void LRUKReplacer::Remove(frame_id_t frame_id) {
 
   BUSTUB_ASSERT(node.GetEvictable(),"invalid frame id");
 
+  pq_.erase(frame_id);//set在erase的过程中需要先找到对应element,也就是会用到comparator。
+                         //comparator又会用到node_store_中对应的(k,v)。如果先将frame_id从node_store_
+                         //移走,pq_ erase时会找不到对应的(k,v),发生报错。
   node_store_.erase(frame_id);
-  pq_.erase(frame_id);
+
 
   curr_size_--;
 }
 
 auto LRUKReplacer::Size() -> size_t {
-  LOG("Size",-1);
+  LOG("Size","curr_size_:",curr_size_);
   return curr_size_;
 
 }

@@ -55,6 +55,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   }else return nullptr;
 
   auto pid=AllocatePage();
+  LOG("NewPage",pid);
   *page_id=pid;
   if(pages_[fid].is_dirty_) FlushPage(pages_[fid].page_id_);
 
@@ -65,7 +66,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   page->page_id_=pid;
   page->is_dirty_=false;
   page->pin_count_=1;
-
+  LOG("PagePin",page->page_id_,page->pin_count_);
   page_table_[pid]=fid;
 
   replacer_->SetEvictable(fid,false);
@@ -81,7 +82,13 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
 auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType access_type) -> Page * {
 
   LOG("FetchPage",page_id);
-  if(page_table_.find(page_id)!=page_table_.end())return &pages_[page_table_.at(page_id)];
+  if(page_table_.find(page_id)!=page_table_.end()){
+
+    Page& page=pages_[page_table_.at(page_id)];
+    page.pin_count_++;// fetch要将pin+1
+    LOG("PagePin",page.page_id_,page.pin_count_);
+    return &page;
+  }
 
   frame_id_t fid;
   if(!free_list_.empty()){
@@ -96,7 +103,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   }else return nullptr;
 
 
-
+  LOG("FetchPage replace",pages_[fid].page_id_);
   if(pages_[fid].is_dirty_) FlushPage(pages_[fid].page_id_);
   page_table_.erase(pages_[fid].page_id_);
 
@@ -106,6 +113,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   page->page_id_=page_id;
   page->is_dirty_=false;
   page->pin_count_=1;
+  LOG("PagePin",page->page_id_,page->pin_count_);
   disk_manager_->ReadPage(page_id,page->data_);
   LOG("ReadPage",page->data_);
   page_table_[page_id]=fid;
@@ -130,9 +138,17 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
   if(page.GetPinCount()==0)return false;
 
   page.pin_count_--;
+  LOG("PagePin",page.page_id_,page.pin_count_);
+
+  /**
+   * 对于某一个page,任何时候只要dirty了,后面就一直是dirty状态,
+   * 除非被flush,delete,或者重置成新的page
+   */
+  if(is_dirty)page.is_dirty_=is_dirty;
+
 
   if(page.GetPinCount()==0){
-    page.is_dirty_=is_dirty;
+
     replacer_->SetEvictable(fid,true);
   }
 

@@ -86,6 +86,11 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
 
     Page& page=pages_[page_table_.at(page_id)];
     page.pin_count_++;// fetch要将pin+1
+
+    replacer_->SetEvictable(page_table_.at(page_id),false);
+
+    replacer_->RecordAccess(page_table_.at(page_id));
+
     LOG("PagePin",page.page_id_,page.pin_count_);
     return &page;
   }
@@ -115,7 +120,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   page->pin_count_=1;
   LOG("PagePin",page->page_id_,page->pin_count_);
   disk_manager_->ReadPage(page_id,page->data_);
-  LOG("ReadPage",page->data_);
+  LOG("ReadPage",std::string(page->data_));
   page_table_[page_id]=fid;
 
   replacer_->SetEvictable(fid,false);
@@ -189,12 +194,14 @@ auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool {
   if(pages_[page_table_.at(page_id)].GetPinCount()>0)return false;
 
   Page& page=pages_[page_table_.at(page_id)];
+  //free_list_.push_front(page_table_.at(page_id));
   page_table_.erase(page_id);
 
   page.ResetMemory();
   page.is_dirty_=false;
   page.page_id_=INVALID_PAGE_ID;
   page.pin_count_=0;
+
 
   DeallocatePage(page_id);
   return true;

@@ -194,7 +194,7 @@ auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool {
   if(pages_[page_table_.at(page_id)].GetPinCount()>0)return false;
 
   Page& page=pages_[page_table_.at(page_id)];
-  //free_list_.push_front(page_table_.at(page_id));
+  free_list_.push_front(page_table_.at(page_id));//将frame重新放回free_list_
   page_table_.erase(page_id);
 
   page.ResetMemory();

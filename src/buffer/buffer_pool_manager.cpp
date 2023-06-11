@@ -142,7 +142,7 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
 
   /**
    * 对于某一个page,任何时候只要dirty了,后面就一直是dirty状态,
-   * 除非被flush,delete,或者重置成新的page
+   * 除非被flush,delete,或者重置成新的page.
    */
   if(is_dirty)page.is_dirty_=is_dirty;
 

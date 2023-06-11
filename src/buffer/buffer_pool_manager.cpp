@@ -22,9 +22,9 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
                                      LogManager *log_manager)
     : pool_size_(pool_size), disk_manager_(disk_manager), log_manager_(log_manager) {
   // TODO(students): remove this line after you have implemented the buffer pool manager
-  throw NotImplementedException(
-      "BufferPoolManager is not implemented yet. If you have finished implementing BPM, please remove the throw "
-      "exception line in `buffer_pool_manager.cpp`.");
+//  throw NotImplementedException(
+//      "BufferPoolManager is not implemented yet. If you have finished implementing BPM, please remove the throw "
+//      "exception line in `buffer_pool_manager.cpp`.");
 
   // we allocate a consecutive memory space for the buffer pool
   pages_ = new Page[pool_size_];
@@ -34,25 +34,157 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
   for (size_t i = 0; i < pool_size_; ++i) {
     free_list_.emplace_back(static_cast<int>(i));
   }
+
+  LOG("BufferPoolManager","pool_size",pool_size,"replacer_k",replacer_k);
 }
 
 BufferPoolManager::~BufferPoolManager() { delete[] pages_; }
 
-auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * { return nullptr; }
+auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
+  LOG("NewPage");
+  frame_id_t fid;
+  if(!free_list_.empty()){
+
+    fid= free_list_.back();
+    free_list_.pop_back();
+
+  }else if(replacer_->Size()!=0){
+
+    replacer_->Evict(&fid);
+
+  }else return nullptr;
+
+  auto pid=AllocatePage();
+  *page_id=pid;
+  if(pages_[fid].is_dirty_) FlushPage(pages_[fid].page_id_);
+
+  page_table_.erase(pages_[fid].page_id_);//要及时从page table中erase掉
+  Page* page=&pages_[fid];
+
+  page->ResetMemory();
+  page->page_id_=pid;
+  page->is_dirty_=false;
+  page->pin_count_=1;
+
+  page_table_[pid]=fid;
+
+  replacer_->SetEvictable(fid,false);
+
+  replacer_->RecordAccess(fid);
+
+
+  return page;
+
+
+}
 
 auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType access_type) -> Page * {
-  return nullptr;
+
+  LOG("FetchPage",page_id);
+  if(page_table_.find(page_id)!=page_table_.end())return &pages_[page_table_.at(page_id)];
+
+  frame_id_t fid;
+  if(!free_list_.empty()){
+
+    fid= free_list_.back();
+    free_list_.pop_back();
+
+  }else if(replacer_->Size()!=0){
+
+    replacer_->Evict(&fid);
+
+  }else return nullptr;
+
+
+
+  if(pages_[fid].is_dirty_) FlushPage(pages_[fid].page_id_);
+  page_table_.erase(pages_[fid].page_id_);
+
+  Page* page=&pages_[fid];
+
+  page->ResetMemory();
+  page->page_id_=page_id;
+  page->is_dirty_=false;
+  page->pin_count_=1;
+  disk_manager_->ReadPage(page_id,page->data_);
+  LOG("ReadPage",page->data_);
+  page_table_[page_id]=fid;
+
+  replacer_->SetEvictable(fid,false);
+
+  replacer_->RecordAccess(fid);
+
+  return page;
 }
 
 auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unused]] AccessType access_type) -> bool {
-  return false;
+  LOG("UnpinPage",page_id,is_dirty);
+  if(page_table_.find(page_id)==page_table_.end())return false;
+
+  auto it=page_table_.find(page_id);
+  auto fid=it->second;
+  Page& page=pages_[fid];
+
+
+
+  if(page.GetPinCount()==0)return false;
+
+  page.pin_count_--;
+
+  if(page.GetPinCount()==0){
+    page.is_dirty_=is_dirty;
+    replacer_->SetEvictable(fid,true);
+  }
+
+  return true;
 }
 
-auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool { return false; }
+auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
+  LOG("FlushPage",page_id);
+  if(page_id==INVALID_PAGE_ID)return false;
+  if(page_table_.find(page_id)==page_table_.end())return false;
 
-void BufferPoolManager::FlushAllPages() {}
+  auto fid=page_table_.at(page_id);
+  Page& page=pages_[fid];
 
-auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool { return false; }
+  disk_manager_->WritePage(page_id,page.GetData());
+  page.is_dirty_= false;
+  page.page_id_=INVALID_PAGE_ID;
+  page_table_.erase(page_id);
+
+  return true;
+
+
+}
+
+void BufferPoolManager::FlushAllPages() {
+
+  LOG("FlushAllPages");
+  for(auto it=page_table_.begin();it!=page_table_.end();it++){
+    FlushPage(it->first);
+  }
+
+}
+
+auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool {
+  LOG("DeletePage",page_id);
+  if(page_table_.find(page_id)==page_table_.end())return true;
+
+  if(pages_[page_table_.at(page_id)].GetPinCount()>0)return false;
+
+  Page& page=pages_[page_table_.at(page_id)];
+  page_table_.erase(page_id);
+
+  page.ResetMemory();
+  page.is_dirty_=false;
+  page.page_id_=INVALID_PAGE_ID;
+  page.pin_count_=0;
+
+  DeallocatePage(page_id);
+  return true;
+
+
+}
 
 auto BufferPoolManager::AllocatePage() -> page_id_t { return next_page_id_++; }
 

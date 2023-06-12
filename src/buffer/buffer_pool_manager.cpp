@@ -59,7 +59,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   auto pid=AllocatePage();
   LOG("NewPage",pid);
   *page_id=pid;
-  if(pages_[fid].is_dirty_) FlushPage(pages_[fid].page_id_);
+  if(pages_[fid].is_dirty_) disk_manager_->WritePage(pages_[fid].page_id_,pages_[fid].GetData());
 
   page_table_.erase(pages_[fid].page_id_);//要及时从page table中erase掉
   Page* page=&pages_[fid];
@@ -112,7 +112,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
 
 
   LOG("FetchPage replace",pages_[fid].page_id_);
-  if(pages_[fid].is_dirty_) FlushPage(pages_[fid].page_id_);
+  if(pages_[fid].is_dirty_) disk_manager_->WritePage(pages_[fid].page_id_,pages_[fid].GetData());
   page_table_.erase(pages_[fid].page_id_);
 
   Page* page=&pages_[fid];
@@ -165,6 +165,8 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
 }
 
 auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
+
+  const std::lock_guard<std::mutex> lock(latch_);
   LOG("FlushPage",page_id);
   if(page_id==INVALID_PAGE_ID){
     LOG("FlushPage","INVALID_PAGE_ID",page_id);
@@ -192,10 +194,11 @@ auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
 }
 
 void BufferPoolManager::FlushAllPages() {
-  const std::lock_guard<std::mutex> lock(latch_);
+  //const std::lock_guard<std::mutex> lock(latch_);
   LOG("FlushAllPages");
-  for(auto it=page_table_.begin();it!=page_table_.end();it++){
-    FlushPage(it->first);
+
+  for(size_t i=0;i<pool_size_;i++){
+    FlushPage(i);
   }
 
 }

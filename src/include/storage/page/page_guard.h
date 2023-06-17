@@ -1,6 +1,7 @@
 #pragma once
 
 #include "storage/page/page.h"
+#include "buffer/lru_k_replacer.h"
 
 namespace bustub {
 
@@ -10,7 +11,10 @@ class BasicPageGuard {
  public:
   BasicPageGuard() = default;
 
-  BasicPageGuard(BufferPoolManager *bpm, Page *page) : bpm_(bpm), page_(page) {}
+  BasicPageGuard(BufferPoolManager *bpm, Page *page) : bpm_(bpm), page_(page) {
+
+    LOG("BasicPageGuard","bpm:",bpm,"page:",page->GetPageId());
+  }
 
   BasicPageGuard(const BasicPageGuard &) = delete;
   auto operator=(const BasicPageGuard &) -> BasicPageGuard & = delete;
@@ -61,7 +65,12 @@ class BasicPageGuard {
 
   auto PageId() -> page_id_t { return page_->GetPageId(); }
 
-  auto GetData() -> const char * { return page_->GetData(); }
+  auto GetData() -> const char * {
+
+    LOG("GetData",page_->GetPageId());
+    return page_->GetData();
+
+  }
 
   template <class T>
   auto As() -> const T * {
@@ -69,6 +78,7 @@ class BasicPageGuard {
   }
 
   auto GetDataMut() -> char * {
+    LOG("GetDataMut",page_->GetPageId());
     is_dirty_ = true;
     return page_->GetData();
   }
@@ -88,12 +98,18 @@ class BasicPageGuard {
   Page *page_{nullptr};
   bool is_dirty_{false};
 
+  bool dropped{false};
+
 };
 
 class ReadPageGuard {
  public:
   ReadPageGuard() = default;
-  ReadPageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {}
+  ReadPageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
+
+    LOG("ReadPageGuard","bpm:",bpm,"page:",page->GetPageId());
+
+  }
   ReadPageGuard(const ReadPageGuard &) = delete;
   auto operator=(const ReadPageGuard &) -> ReadPageGuard & = delete;
 
@@ -153,7 +169,11 @@ class ReadPageGuard {
 class WritePageGuard {
  public:
   WritePageGuard() = default;
-  WritePageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {}
+  WritePageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
+
+    LOG("WritePageGuard","bpm:",bpm,"page:",page->GetPageId());
+
+  }
   WritePageGuard(const WritePageGuard &) = delete;
   auto operator=(const WritePageGuard &) -> WritePageGuard & = delete;
 

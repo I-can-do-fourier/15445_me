@@ -14,7 +14,7 @@
 #include "common/exception.h"
 
 //#include "buffer/log_helper.h"
-bool g_enableLogging = true;
+bool g_enableLogging = false;
 namespace bustub {
 
 

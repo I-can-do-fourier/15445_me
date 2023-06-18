@@ -36,7 +36,7 @@ auto BasicPageGuard::operator=(BasicPageGuard &&that) noexcept -> BasicPageGuard
 
 
   //if (page_ != nullptr) bpm_->UnpinPage(page_->GetPageId(), is_dirty_);
-  Drop();
+  Drop();//must drop the existing resources. or will cause deadlock in write.
   bpm_=that.bpm_;
   is_dirty_=that.is_dirty_;
   page_=that.page_;
@@ -125,7 +125,7 @@ auto WritePageGuard::operator=(WritePageGuard &&that) noexcept -> WritePageGuard
   LOG("WritePageGuard::operator=",that.guard_.page_== nullptr? -1:that.PageId()) ;
 
   if (this != &that) {
-    Drop();
+    Drop();//must drop the existing resources. or will cause deadlock.
     guard_ = std::move(that.guard_);
     // Additional resource transfers or logic specific to ReadPageGuard
     // can be added here if needed.

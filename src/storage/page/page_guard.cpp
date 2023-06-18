@@ -86,8 +86,9 @@ auto ReadPageGuard::operator=(ReadPageGuard &&that) noexcept -> ReadPageGuard & 
 void ReadPageGuard::Drop() {
   LOG("ReadPageGuard::Drop",guard_.page_== nullptr? -1:PageId()) ;
 
+
   if(dropped)return;
-  guard_.page_->RUnlatch();
+  if(guard_.page_!= nullptr)guard_.page_->RUnlatch();
   guard_.Drop();
 
   dropped=true;
@@ -138,7 +139,7 @@ void WritePageGuard::Drop() {
   LOG("WritePageGuard::Drop",guard_.page_== nullptr? -1:PageId()) ;
 
   if(dropped)return;
-  guard_.page_->WUnlatch();
+  if(guard_.page_!= nullptr)guard_.page_->WUnlatch();
   guard_.Drop();
 
   dropped=true;

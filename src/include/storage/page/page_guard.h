@@ -111,8 +111,8 @@ class ReadPageGuard {
 
     LOG("ReadPageGuard","bpm:",bpm,"page:",page->GetPageId());
     LOG("TRHEAD:",  std::this_thread::get_id());
-    guard_.page_->RLatch();
-    LOG("ReadPageGuard","bpm:lock acquired",bpm,"page:",page->GetPageId());
+//    guard_.page_->RLatch();
+//    LOG("ReadPageGuard","bpm:lock acquired",bpm,"page:",page->GetPageId());
   }
   ReadPageGuard(const ReadPageGuard &) = delete;
   auto operator=(const ReadPageGuard &) -> ReadPageGuard & = delete;
@@ -179,8 +179,8 @@ class WritePageGuard {
 
     LOG("WritePageGuard","bpm:",bpm,"page:",page->GetPageId());
     LOG("TRHEAD:",  std::this_thread::get_id());
-    guard_.page_->WLatch();
-    LOG("WritePageGuard","bpm:Lock acquired",bpm,"page:",page->GetPageId());
+//    guard_.page_->WLatch();
+//    LOG("WritePageGuard","bpm:Lock acquired",bpm,"page:",page->GetPageId());
   }
   WritePageGuard(const WritePageGuard &) = delete;
   auto operator=(const WritePageGuard &) -> WritePageGuard & = delete;

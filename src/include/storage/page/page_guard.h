@@ -2,6 +2,7 @@
 
 #include "storage/page/page.h"
 #include "buffer/lru_k_replacer.h"
+#include <thread>
 
 namespace bustub {
 
@@ -14,6 +15,7 @@ class BasicPageGuard {
   BasicPageGuard(BufferPoolManager *bpm, Page *page) : bpm_(bpm), page_(page) {
 
     LOG("BasicPageGuard","bpm:",bpm,"page:",page->GetPageId());
+    LOG("TRHEAD:",  std::this_thread::get_id());
   }
 
   BasicPageGuard(const BasicPageGuard &) = delete;
@@ -108,7 +110,9 @@ class ReadPageGuard {
   ReadPageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
 
     LOG("ReadPageGuard","bpm:",bpm,"page:",page->GetPageId());
-
+    LOG("TRHEAD:",  std::this_thread::get_id());
+    guard_.page_->RLatch();
+    LOG("ReadPageGuard","bpm:lock acquired",bpm,"page:",page->GetPageId());
   }
   ReadPageGuard(const ReadPageGuard &) = delete;
   auto operator=(const ReadPageGuard &) -> ReadPageGuard & = delete;
@@ -164,6 +168,8 @@ class ReadPageGuard {
  private:
   // You may choose to get rid of this and add your own private variables.
   BasicPageGuard guard_;
+
+  bool dropped{false};
 };
 
 class WritePageGuard {
@@ -172,7 +178,9 @@ class WritePageGuard {
   WritePageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
 
     LOG("WritePageGuard","bpm:",bpm,"page:",page->GetPageId());
-
+    LOG("TRHEAD:",  std::this_thread::get_id());
+    guard_.page_->WLatch();
+    LOG("WritePageGuard","bpm:Lock acquired",bpm,"page:",page->GetPageId());
   }
   WritePageGuard(const WritePageGuard &) = delete;
   auto operator=(const WritePageGuard &) -> WritePageGuard & = delete;
@@ -235,6 +243,8 @@ class WritePageGuard {
  private:
   // You may choose to get rid of this and add your own private variables.
   BasicPageGuard guard_;
+
+  bool dropped{false};
 };
 
 }  // namespace bustub

@@ -8,16 +8,19 @@ BasicPageGuard::BasicPageGuard(BasicPageGuard &&that) noexcept {
  bpm_=that.bpm_;
  is_dirty_=that.is_dirty_;
  page_=that.page_;
+ dropped= that.dropped;
 
  that.bpm_= nullptr;
  that.is_dirty_= false;
  that.page_= nullptr;
+ that.dropped=false;
 
 }
 
 void BasicPageGuard::Drop() {
 
   LOG("BasicPageGuard::Drop",page_== nullptr? -1:PageId()) ;
+  if(dropped)return;
   if (page_ != nullptr&&bpm_!= nullptr) bpm_->UnpinPage(page_->GetPageId(), is_dirty_);
   bpm_= nullptr;
   is_dirty_=false;
@@ -37,11 +40,12 @@ auto BasicPageGuard::operator=(BasicPageGuard &&that) noexcept -> BasicPageGuard
   bpm_=that.bpm_;
   is_dirty_=that.is_dirty_;
   page_=that.page_;
+  dropped=that.dropped;
 
   that.bpm_= nullptr;
   that.is_dirty_= false;
   that.page_= nullptr;
-
+  that.dropped=false;
 
   return *this;
 
@@ -53,17 +57,28 @@ BasicPageGuard::~BasicPageGuard(){
     if(!dropped)Drop();
 };  // NOLINT
 
+//==============================================================
+
 ReadPageGuard::ReadPageGuard(ReadPageGuard &&that) noexcept
     :guard_(std::move(that.guard_))
 {
   LOG("ReadPageGuard::ReadPageGuard",that.guard_.page_== nullptr? -1:that.PageId()) ;
 
+  dropped=that.dropped;
 
+  that.dropped=false;
 }
 
 auto ReadPageGuard::operator=(ReadPageGuard &&that) noexcept -> ReadPageGuard & {
   LOG("ReadPageGuard::operator=",that.guard_.page_== nullptr? -1:that.PageId()) ;
 
+  if (this != &that) {
+    guard_ = std::move(that.guard_);
+    // Additional resource transfers or logic specific to ReadPageGuard
+    // can be added here if needed.
+    dropped=that.dropped;
+    that.dropped=false;
+  }
   return *this;
 
 }
@@ -71,12 +86,23 @@ auto ReadPageGuard::operator=(ReadPageGuard &&that) noexcept -> ReadPageGuard & 
 void ReadPageGuard::Drop() {
   LOG("ReadPageGuard::Drop",guard_.page_== nullptr? -1:PageId()) ;
 
+  if(dropped)return;
+  guard_.page_->RUnlatch();
+  guard_.Drop();
+
+  dropped=true;
 
 }
 
 ReadPageGuard::~ReadPageGuard() {
 
   LOG("ReadPageGuard::~ReadPageGuard",guard_.page_== nullptr? -1:PageId()) ;
+
+
+  if(dropped)return;
+
+  Drop();
+
 }  // NOLINT
 
 WritePageGuard::WritePageGuard(WritePageGuard &&that) noexcept
@@ -86,12 +112,22 @@ WritePageGuard::WritePageGuard(WritePageGuard &&that) noexcept
 
   LOG("WritePageGuard::WritePageGuard",that.guard_.page_== nullptr? -1:that.PageId()) ;
 
+  dropped=that.dropped;
 
+  that.dropped=false;
 };
 
 auto WritePageGuard::operator=(WritePageGuard &&that) noexcept -> WritePageGuard & {
 
   LOG("WritePageGuard::operator=",that.guard_.page_== nullptr? -1:that.PageId()) ;
+
+  if (this != &that) {
+    guard_ = std::move(that.guard_);
+    // Additional resource transfers or logic specific to ReadPageGuard
+    // can be added here if needed.
+    dropped=that.dropped;
+    that.dropped=false;
+  }
   return *this;
 
 
@@ -100,11 +136,20 @@ auto WritePageGuard::operator=(WritePageGuard &&that) noexcept -> WritePageGuard
 void WritePageGuard::Drop() {
 
   LOG("WritePageGuard::Drop",guard_.page_== nullptr? -1:PageId()) ;
+
+  if(dropped)return;
+  guard_.page_->WUnlatch();
+  guard_.Drop();
+
+  dropped=true;
+
 }
 
 WritePageGuard::~WritePageGuard() {
 
   LOG("WritePageGuard::~WritePageGuard",guard_.page_== nullptr? -1:PageId()) ;
+
+  if(!dropped)Drop();
 }  // NOLINT
 
 }  // namespace bustub

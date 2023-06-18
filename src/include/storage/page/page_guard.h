@@ -14,7 +14,7 @@ class BasicPageGuard {
 
   BasicPageGuard(BufferPoolManager *bpm, Page *page) : bpm_(bpm), page_(page) {
 
-    LOG("BasicPageGuard","bpm:",bpm,"page:",page->GetPageId());
+    LOG("BasicPageGuard","bpm:",bpm,"page:",page== nullptr? -1:page->GetPageId());
     LOG("TRHEAD:",  std::this_thread::get_id());
   }
 
@@ -109,7 +109,7 @@ class ReadPageGuard {
   ReadPageGuard() = default;
   ReadPageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
 
-    LOG("ReadPageGuard","bpm:",bpm,"page:",page->GetPageId());
+    LOG("ReadPageGuard","bpm:",bpm,"page:",page== nullptr? -1:page->GetPageId());
     LOG("TRHEAD:",  std::this_thread::get_id());
 //    guard_.page_->RLatch();
 //    LOG("ReadPageGuard","bpm:lock acquired",bpm,"page:",page->GetPageId());
@@ -177,7 +177,7 @@ class WritePageGuard {
   WritePageGuard() = default;
   WritePageGuard(BufferPoolManager *bpm, Page *page) : guard_(bpm, page) {
 
-    LOG("WritePageGuard","bpm:",bpm,"page:",page->GetPageId());
+    LOG("WritePageGuard","bpm:",bpm,"page:",page== nullptr? -1:page->GetPageId());
     LOG("TRHEAD:",  std::this_thread::get_id());
 //    guard_.page_->WLatch();
 //    LOG("WritePageGuard","bpm:Lock acquired",bpm,"page:",page->GetPageId());

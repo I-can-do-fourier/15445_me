@@ -35,8 +35,8 @@ auto BasicPageGuard::operator=(BasicPageGuard &&that) noexcept -> BasicPageGuard
   BUSTUB_ASSERT(this != &that,"self assignment");
 
 
-  if (page_ != nullptr) bpm_->UnpinPage(page_->GetPageId(), is_dirty_);
-
+  //if (page_ != nullptr) bpm_->UnpinPage(page_->GetPageId(), is_dirty_);
+  Drop();
   bpm_=that.bpm_;
   is_dirty_=that.is_dirty_;
   page_=that.page_;
@@ -73,6 +73,8 @@ auto ReadPageGuard::operator=(ReadPageGuard &&that) noexcept -> ReadPageGuard & 
   LOG("ReadPageGuard::operator=",that.guard_.page_== nullptr? -1:that.PageId()) ;
 
   if (this != &that) {
+
+    Drop();
     guard_ = std::move(that.guard_);
     // Additional resource transfers or logic specific to ReadPageGuard
     // can be added here if needed.
@@ -123,6 +125,7 @@ auto WritePageGuard::operator=(WritePageGuard &&that) noexcept -> WritePageGuard
   LOG("WritePageGuard::operator=",that.guard_.page_== nullptr? -1:that.PageId()) ;
 
   if (this != &that) {
+    Drop();
     guard_ = std::move(that.guard_);
     // Additional resource transfers or logic specific to ReadPageGuard
     // can be added here if needed.

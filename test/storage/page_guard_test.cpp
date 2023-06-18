@@ -76,6 +76,11 @@ TEST(MyPageGuardTest, SampleTest) {
   ReadPageGuard rpg{bpm.get(),page0};
   WritePageGuard wpg{bpm.get(),page1};
 
+  WritePageGuard wpg2{bpm.get(), nullptr};
+
+
+  WritePageGuard wpg3{std::move(wpg2)};
+
   disk_manager->ShutDown();
 
 }

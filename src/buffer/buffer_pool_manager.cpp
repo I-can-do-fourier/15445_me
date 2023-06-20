@@ -40,6 +40,10 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
 
 BufferPoolManager::~BufferPoolManager() { delete[] pages_; }
 
+/**
+ *
+ * 新增一个page，目前只是逻辑上的新增,disk还没有变化。frame数量不变
+ */
 auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   const std::lock_guard<std::mutex> lock(latch_);
   LOG("NewPage");
@@ -59,6 +63,12 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   auto pid=AllocatePage();
   LOG("NewPage",pid);
   *page_id=pid;
+
+  //将原frame中的dirty页写回去
+  /**
+   *
+   * 不能直接调用FlushPage,会发生死锁。
+   */
   if(pages_[fid].is_dirty_) disk_manager_->WritePage(pages_[fid].page_id_,pages_[fid].GetData());
 
   page_table_.erase(pages_[fid].page_id_);//要及时从page table中erase掉
@@ -67,7 +77,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   page->ResetMemory();
   page->page_id_=pid;
   page->is_dirty_=false;
-  page->pin_count_=1;
+  page->pin_count_=1;//new_page算做一次pin_count
   LOG("PagePin",page->page_id_,page->pin_count_);
   page_table_[pid]=fid;
   LOG("NewPage","set table",pid);
@@ -122,7 +132,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   page->is_dirty_=false;
   page->pin_count_=1;
   LOG("PagePin",page->page_id_,page->pin_count_);
-  disk_manager_->ReadPage(page_id,page->data_);
+  disk_manager_->ReadPage(page_id,page->data_);//将page中的数据从disk中读出来。
   LOG("ReadPage",std::string(page->data_));
   page_table_[page_id]=fid;
   LOG("NewPage","set table",page_id);
@@ -152,6 +162,8 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
   /**
    * 对于某一个page,任何时候只要dirty了,后面就一直是dirty状态,
    * 除非被flush,delete,或者重置成新的page.
+   *
+   * 因此,如果is_dirty==false,不要改变page.is_dirty_
    */
   if(is_dirty)page.is_dirty_=is_dirty;
 
@@ -197,6 +209,12 @@ void BufferPoolManager::FlushAllPages() {
   //const std::lock_guard<std::mutex> lock(latch_);
   LOG("FlushAllPages");
 
+  /**
+   *
+   * TODO:此处是否需要满足一定的一致性。保证所有frame一次性被刷完。
+   * 目前是每次刷一个frame
+   *
+   */
   for(size_t i=0;i<pool_size_;i++){
     FlushPage(i);
   }

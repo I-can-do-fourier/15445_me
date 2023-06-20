@@ -24,7 +24,7 @@ LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(num_fra
 
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
 
-  const std::lock_guard<std::mutex> lock(latch_);
+  const std::lock_guard<std::mutex> lock(latch_);//超出scope后，自动解锁
   LOG("Evict");
   if(curr_size_==0)return false;
 
@@ -43,6 +43,12 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   return true;
 }
 
+/**
+ *
+ *TODO:RecordAccess被调用，是否意味着该frame_id_t现在已经被pin住了。
+ * 也就是他一定不在pq_(evictable list)中
+ *
+ */
 void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType access_type) {
 
   const std::lock_guard<std::mutex> lock(latch_);
@@ -58,16 +64,20 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
 
    /**
     *
-    * 潜在的bug。如果先改变history，之后再erase，然后立即insert。在erase过程中，是不是
+    * 潜在的bug。如果先改变history，之后再erase，然后立即insert。在erase过程中，
     * 可能找不到这个element。
     */
 
-   if(node.GetEvictable())pq_.erase(frame_id);
+   if(node.GetEvictable())pq_.erase(frame_id);//先拿出来
   //auto it=pq_.find(frame_id);
+
+   /**
+    * 改变history
+    */
   node.GetHistory().push_back(current_timestamp_++);
   if(node.GetHistory().size()>k_)node.GetHistory().pop_front();
 
-  if(node.GetEvictable())pq_.insert(frame_id);
+  if(node.GetEvictable())pq_.insert(frame_id);//重新放入，根据新的history排位。
 
 
  }
@@ -99,7 +109,7 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
   BUSTUB_ASSERT(frame_id>=0&&(uint32_t)frame_id<=replacer_size_,"invalid frame id");
 
   if(node_store_.find(frame_id)==node_store_.end())return;
-  if(node_store_.at(frame_id).GetEvictable()==set_evictable)return;
+  if(node_store_.at(frame_id).GetEvictable()==set_evictable)return;//状态不发生改变，直接返回
 
   LRUKNode& node=node_store_[frame_id];
   node.GetEvictable()=set_evictable;
@@ -137,7 +147,7 @@ void LRUKReplacer::Remove(frame_id_t frame_id) {
 
   curr_size_--;
 }
-
+//控制evicable frame的数量，其实就是pq的大小。
 auto LRUKReplacer::Size() -> size_t {
   LOG("Size","curr_size_:",curr_size_);
   return curr_size_;

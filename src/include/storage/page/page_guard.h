@@ -14,6 +14,7 @@ class BasicPageGuard {
 
   BasicPageGuard(BufferPoolManager *bpm, Page *page) : bpm_(bpm), page_(page) {
 
+    //此处好像不能lock.
     LOG("BasicPageGuard","bpm:",bpm,"page:",page== nullptr? -1:page->GetPageId());
     LOG("TRHEAD:",  std::this_thread::get_id());
   }
@@ -100,7 +101,7 @@ class BasicPageGuard {
   Page *page_{nullptr};
   bool is_dirty_{false};
 
-  bool dropped{false};
+  bool dropped{false};//是否已经被dropped
 
 };
 

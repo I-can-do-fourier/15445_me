@@ -45,6 +45,7 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
 
   array_[index].first=key;
+  //IncreaseSize(1);
 }
 
 /*

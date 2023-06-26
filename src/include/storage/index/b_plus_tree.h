@@ -116,6 +116,11 @@ class BPlusTree {
   // read data from file and remove one by one
   void RemoveFromFile(const std::string &file_name, Transaction *txn = nullptr);
 
+  //self defined
+
+  auto InsertHp(const KeyType &key, const ValueType &value, Transaction *txn,page_id_t &page_id,Context &ctx) -> std::pair<KeyType,ValueType>;
+  auto Search(const KeyType &key, MappingType* array, Transaction *txn,page_id_t &page_id,Context &ctx) -> int;
+
  private:
   /* Debug Routines for FREE!! */
   void ToGraph(page_id_t page_id, const BPlusTreePage *page, std::ofstream &out);

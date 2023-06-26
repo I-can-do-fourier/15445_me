@@ -58,8 +58,71 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
   // Declaration of context instance.
   Context ctx;
   (void)ctx;
+
+//  auto hd_guard=bpm_->FetchPageBasic(header_page_id_);
+//  auto it=reinterpret_cast<BPlusTreeHeaderPage *>(hd_guard.GetDataMut());
+
+  WritePageGuard hd_guard = bpm_->FetchPageWrite(header_page_id_);
+  auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
+
+  page_id_t pid=header_page->root_page_id_;
+
+  BasicPageGuard guard;
+  if(pid==INVALID_PAGE_ID){
+
+
+
+    guard=bpm_->NewPageGuarded(&pid);
+    header_page->root_page_id_=pid;
+    auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+    page->Init();
+    guard.Drop();
+
+  }
+
+  ctx.root_page_id_=pid;
+  ctx.header_page_=std::move(hd_guard);
+  page_id_t pid_new=InsertHp(key,value,txn,pid,ctx);//这个地方要用reference
+
   return false;
 }
+
+INDEX_TEMPLATE_ARGUMENTS
+auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transaction *txn,page_id_t &page_id,Context &ctx) -> std::pair<KeyType,ValueType>{
+  // Declaration of context instance.
+
+
+  auto guard=bpm_->FetchPageWrite(page_id);
+
+  auto p = guard.AsMut<BPlusTreePage>();
+
+  if(p->IsLeafPage()){
+
+    auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+
+
+  }
+  else{
+
+    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+
+    page_id_t pid= page->Search(key);
+
+
+    if(pid==INVALID_PAGE_ID)return std::pair<KeyType,page_id_t>(key,) ;
+    auto pair=InsertHp(key,value,txn,pid,ctx);
+
+     MappingType* mp;
+
+     page->Insert(pair.first,pair.second);
+
+
+  }
+
+  return 0;
+}
+
+
 
 /*****************************************************************************
  * REMOVE
@@ -109,7 +172,13 @@ auto BPLUSTREE_TYPE::End() -> INDEXITERATOR_TYPE { return INDEXITERATOR_TYPE(); 
  * @return Page id of the root of this tree
  */
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::GetRootPageId() -> page_id_t { return 0; }
+auto BPLUSTREE_TYPE::GetRootPageId() -> page_id_t {
+
+  BasicPageGuard guard = bpm_->FetchPageBasic(header_page_id_);
+  auto header_page = guard.AsMut<BPlusTreeHeaderPage>();
+
+  return header_page->root_page_id_;
+}
 
 /*****************************************************************************
  * UTILITIES AND DEBUG

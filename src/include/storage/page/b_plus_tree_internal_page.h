@@ -99,6 +99,13 @@ class BPlusTreeInternalPage : public BPlusTreePage {
     return kstr;
   }
 
+  //self-defined
+
+  auto Search(const KeyType &key) -> page_id_t ;
+  void Insert(const KeyType &key, const ValueType &value);
+
+//  MappingType* GetArray() { return array_; }
+//  const MappingType* GetArray() const { return array_; }
  private:
   // Flexible array member for page data.
   MappingType array_[0];

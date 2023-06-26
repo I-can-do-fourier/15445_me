@@ -48,7 +48,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const -> page_id_t {
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
 
-  next_page_id_=next_page_id
+  next_page_id_=next_page_id;
 }
 
 /*

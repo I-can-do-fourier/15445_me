@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <sstream>
+#include <utility>
 
 #include "common/exception.h"
 #include "common/rid.h"
@@ -60,6 +61,22 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const -> KeyType {
   // replace with your own code
   KeyType key{array_[index].first};
   return key;
+}
+
+//self-defined
+
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value) ->bool{
+
+
+  return false;
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::Split()->std::pair<KeyType,page_id_t>{
+
+
+  return std::pair<KeyType,page_id_t>(array_[0].first,0);
 }
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;

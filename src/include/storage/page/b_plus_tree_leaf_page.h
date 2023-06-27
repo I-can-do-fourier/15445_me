@@ -84,6 +84,11 @@ class BPlusTreeLeafPage : public BPlusTreePage {
     return kstr;
   }
 
+  //self-defined
+
+  auto Insert(const KeyType &key, const ValueType &value) ->bool;
+  auto Split()->std::pair<KeyType,page_id_t>;
+
  private:
   page_id_t next_page_id_;
   // Flexible array member for page data.

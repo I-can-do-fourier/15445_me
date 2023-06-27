@@ -1,6 +1,7 @@
 #include <sstream>
 #include <string>
 
+#include "common/config.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/rid.h"
@@ -82,13 +83,17 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
 
   ctx.root_page_id_=pid;
   ctx.header_page_=std::move(hd_guard);
-  page_id_t pid_new=InsertHp(key,value,txn,pid,ctx);//这个地方要用reference
+  auto pair=InsertHp(key,value,txn,pid,ctx);//这个地方要用reference
 
+  if(pair.second!=pid){
+
+    header_page->root_page_id_=pair.second;
+  }
   return false;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transaction *txn,page_id_t &page_id,Context &ctx) -> std::pair<KeyType,ValueType>{
+auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transaction *txn,page_id_t &page_id,Context &ctx) -> std::pair<KeyType,page_id_t>{
   // Declaration of context instance.
 
 
@@ -100,29 +105,80 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
 
     auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
 
+    auto res=page->Insert(key, value);
 
-  }
-  else{
+    if(!res)return std::pair<KeyType,page_id_t>(key,INVALID_PAGE_ID);
 
-    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+    if(page->GetSize()==page->GetMaxSize()){
 
-    page_id_t pid= page->Search(key);
+        auto new_p=page->Split();
 
+        return new_p;
+    }
 
-    if(pid==INVALID_PAGE_ID)return std::pair<KeyType,page_id_t>(key,) ;
+    return std::pair<KeyType,page_id_t>(key,page_id);
+
+  }else{
+
+    /**
+
+      因为BPLUSTREE_TYPE和BPlusTreeInternalPage的explicit template instantiation不同，
+      这里的ValueType要明确成page_id_t
+    */
+    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
+
+    auto index= page->Search(key);
+
+    if(index<0)return std::pair<KeyType,page_id_t>(key,INVALID_PAGE_ID);
+    //page->Temp();
+    //page->ToString();
+
+    auto pid=page->GetPointer(index);
+    if(pid==INVALID_PAGE_ID)return std::pair<KeyType,page_id_t>(key,pid);
+
     auto pair=InsertHp(key,value,txn,pid,ctx);
 
-     MappingType* mp;
+    
+    if(pair.second!=pid){
+      // page_id_t* new_pid;
+      // BasicPageGuard new_guard=bpm_->NewPageGuarded(new_pid);
+      // auto new_page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(new_guard.GetDataMut());
 
-     page->Insert(pair.first,pair.second);
+      page->Insert(pair.first,pair.second);
+
+      if(page->GetSize()==page->GetMaxSize()){
+
+        auto new_p=page->Split();
+
+        return new_p;
+      }
+
+      return std::pair<KeyType,page_id_t>(key,page_id);
+      
+    }else{
+
+
+      return std::pair<KeyType,page_id_t>(key,page_id);
+    }
+
+
+
 
 
   }
 
-  return 0;
+  return std::pair<KeyType,page_id_t>(key,page_id);
+
 }
 
+INDEX_TEMPLATE_ARGUMENTS
+auto BPLUSTREE_TYPE::Search(const KeyType &key, MappingType* array, Transaction *txn,page_id_t &page_id,Context &ctx) -> int{
+  // Declaration of context instance.
+ 
 
+ return 0;
+
+}
 
 /*****************************************************************************
  * REMOVE

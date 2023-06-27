@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "common/config.h"
 #include "common/exception.h"
 #include "storage/page/b_plus_tree_internal_page.h"
 
@@ -60,10 +61,48 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const -> ValueType {
 
 //self-defined
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value){
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, page_id_t &page_id) {
+
+//  int index=0;
+//  while(KeyComparator(key,array_[index].first)<0){
+//
+//
+//  }
+//
+//  page_id_t* pid;
+//  auto np=bpm->NewPageGuarded(pid);
 
 
 }
+
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Search(const KeyType &key) -> int {
+
+
+  return 0;
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::GetPointer(int index) -> page_id_t {
+
+
+
+
+  return 0;
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Split()->std::pair<KeyType,page_id_t> {
+
+
+    return std::pair<KeyType,page_id_t>(array_[0].first, array_[0].second);
+}
+
+// auto BPlusTreeInternalPage::Temp() ->int{
+
+
+//   return 0;
+// }
 
 // valuetype for internalNode should be page id_t
 template class BPlusTreeInternalPage<GenericKey<4>, page_id_t, GenericComparator<4>>;
@@ -71,4 +110,17 @@ template class BPlusTreeInternalPage<GenericKey<8>, page_id_t, GenericComparator
 template class BPlusTreeInternalPage<GenericKey<16>, page_id_t, GenericComparator<16>>;
 template class BPlusTreeInternalPage<GenericKey<32>, page_id_t, GenericComparator<32>>;
 template class BPlusTreeInternalPage<GenericKey<64>, page_id_t, GenericComparator<64>>;
+
+
+//===================================
+// template class BPlusTreeInternalPage<GenericKey<4>, RID, GenericComparator<4>>;
+
+// template class BPlusTreeInternalPage<GenericKey<8>, RID, GenericComparator<8>>;
+
+// template class BPlusTreeInternalPage<GenericKey<16>, RID, GenericComparator<16>>;
+
+// template class BPlusTreeInternalPage<GenericKey<32>, RID, GenericComparator<32>>;
+
+// template class BPlusTreeInternalPage<GenericKey<64>, RID, GenericComparator<64>>;
+
 }  // namespace bustub

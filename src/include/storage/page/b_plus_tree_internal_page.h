@@ -13,6 +13,7 @@
 #include <queue>
 #include <string>
 
+#include "common/config.h"
 #include "storage/page/b_plus_tree_page.h"
 
 namespace bustub {
@@ -101,11 +102,15 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   //self-defined
 
-  auto Search(const KeyType &key) -> page_id_t ;
-  void Insert(const KeyType &key, const ValueType &value);
+  auto Search(const KeyType &key) -> int ;
+  void Insert(const KeyType &key, page_id_t &page_id);
+  auto GetPointer(int index) -> page_id_t;
+  auto Split()->std::pair<KeyType,page_id_t>;
+  //auto Temp() ->int;
 
-//  MappingType* GetArray() { return array_; }
-//  const MappingType* GetArray() const { return array_; }
+ MappingType* GetArray() { return array_; }
+ const MappingType* GetArray() const { return array_; }
+
  private:
   // Flexible array member for page data.
   MappingType array_[0];

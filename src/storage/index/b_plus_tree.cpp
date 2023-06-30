@@ -6,6 +6,7 @@
 #include "common/logger.h"
 #include "common/rid.h"
 #include "storage/index/b_plus_tree.h"
+#include "storage/page/page_guard.h"
 
 namespace bustub {
 
@@ -63,7 +64,7 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
 //  auto hd_guard=bpm_->FetchPageBasic(header_page_id_);
 //  auto it=reinterpret_cast<BPlusTreeHeaderPage *>(hd_guard.GetDataMut());
 
-  WritePageGuard hd_guard = bpm_->FetchPageWrite(header_page_id_);
+  BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
   auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
 
   page_id_t pid=header_page->root_page_id_;
@@ -82,14 +83,25 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
   }
 
   ctx.root_page_id_=pid;
-  ctx.header_page_=std::move(hd_guard);
+  //ctx.header_page_=std::move(hd_guard);
   auto pair=InsertHp(key,value,txn,pid,ctx);//这个地方要用reference
+
+  if(pair.second==INVALID_PAGE_ID)return false;
 
   if(pair.second!=pid){
 
-    header_page->root_page_id_=pair.second;
+    
+    guard=bpm_->NewPageGuarded(&pid);
+    //header_page->root_page_id_=pid;
+    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
+    page->Init();
+    page->Insert(pair.first, pair.second);
+
+    guard.Drop();
+
+    header_page->root_page_id_=pid;
   }
-  return false;
+  return true;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -97,7 +109,7 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
   // Declaration of context instance.
 
 
-  auto guard=bpm_->FetchPageWrite(page_id);
+  auto guard=bpm_->FetchPageBasic(page_id);
 
   auto p = guard.AsMut<BPlusTreePage>();
 
@@ -138,6 +150,7 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
 
     auto pair=InsertHp(key,value,txn,pid,ctx);
 
+    if(pair.second==INVALID_PAGE_ID)return std::pair<KeyType,page_id_t>(key,pid); 
     
     if(pair.second!=pid){
       // page_id_t* new_pid;

@@ -79,11 +79,7 @@ auto BPLUSTREE_TYPE::GetValueHp(const KeyType &key, std::vector<ValueType> *resu
     return true;
   }else{
 
-    /**
-
-      因为BPLUSTREE_TYPE和BPlusTreeInternalPage的explicit template instantiation不同，
-      这里的ValueType要明确成page_id_t
-    */
+   
     auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
 
     auto index= page->Search(key,comparator_);
@@ -152,8 +148,8 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
 
   if(pair.second!=pid){
 
-    
-    guard=bpm_->NewPageGuarded(&pid);
+    page_id_t new_pid;
+    guard=bpm_->NewPageGuarded(&new_pid);
     //header_page->root_page_id_=pid;
     auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
     page->Init();
@@ -162,7 +158,7 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
 
     guard.Drop();
 
-    header_page->root_page_id_=pid;
+    header_page->root_page_id_=new_pid;
   }
   return true;
 }

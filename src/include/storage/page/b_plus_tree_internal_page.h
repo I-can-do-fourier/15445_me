@@ -102,10 +102,10 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   //self-defined
 
-  auto Search(const KeyType &key) -> int ;
-  void Insert(const KeyType &key, page_id_t &page_id);
+  auto Search(const KeyType &key,const KeyComparator &comparator) -> int ;
+  void Insert(int index, const KeyType &key, page_id_t &page_id,const KeyComparator &comparator);
   auto GetPointer(int index) -> page_id_t;
-  auto Split()->std::pair<KeyType,page_id_t>;
+  auto Split(BufferPoolManager *bpm)->std::pair<KeyType,page_id_t>;
   //auto Temp() ->int;
 
  MappingType* GetArray() { return array_; }

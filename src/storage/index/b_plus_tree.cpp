@@ -95,7 +95,8 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
     //header_page->root_page_id_=pid;
     auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
     page->Init();
-    page->Insert(pair.first, pair.second);
+    page->Insert(0,pair.first, pair.second,comparator_);
+    page->Insert(0,KeyType{1},pid,comparator_);
 
     guard.Drop();
 
@@ -104,6 +105,7 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
   return true;
 }
 
+//SELF-DEFINED
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transaction *txn,page_id_t &page_id,Context &ctx) -> std::pair<KeyType,page_id_t>{
   // Declaration of context instance.
@@ -117,16 +119,17 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
 
     auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
 
-    auto res=page->Insert(key, value);
+    auto res=page->Insert(key, value,comparator_);
 
     if(!res)return std::pair<KeyType,page_id_t>(key,INVALID_PAGE_ID);
 
     if(page->GetSize()==page->GetMaxSize()){
 
-        auto new_p=page->Split();
+        auto new_p=page->Split(bpm_);
 
         return new_p;
     }
+
 
     return std::pair<KeyType,page_id_t>(key,page_id);
 
@@ -139,7 +142,7 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
     */
     auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
 
-    auto index= page->Search(key);
+    auto index= page->Search(key,comparator_);
 
     if(index<0)return std::pair<KeyType,page_id_t>(key,INVALID_PAGE_ID);
     //page->Temp();
@@ -157,11 +160,11 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
       // BasicPageGuard new_guard=bpm_->NewPageGuarded(new_pid);
       // auto new_page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(new_guard.GetDataMut());
 
-      page->Insert(pair.first,pair.second);
+      page->Insert(index+1,pair.first,pair.second,comparator_);
 
       if(page->GetSize()==page->GetMaxSize()){
 
-        auto new_p=page->Split();
+        auto new_p=page->Split(bpm_);
 
         return new_p;
       }
@@ -184,6 +187,8 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
 
 }
 
+
+
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::Search(const KeyType &key, MappingType* array, Transaction *txn,page_id_t &page_id,Context &ctx) -> int{
   // Declaration of context instance.
@@ -192,6 +197,8 @@ auto BPLUSTREE_TYPE::Search(const KeyType &key, MappingType* array, Transaction 
  return 0;
 
 }
+
+//END-DEFINED
 
 /*****************************************************************************
  * REMOVE

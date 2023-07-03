@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 #include "common/config.h"
 #include "common/exception.h"
@@ -61,25 +62,53 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const -> ValueType {
 
 //self-defined
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, page_id_t &page_id) {
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(int index, const KeyType &key,page_id_t &page_id,const KeyComparator &comparator) {
 
-//  int index=0;
-//  while(KeyComparator(key,array_[index].first)<0){
-//
-//
-//  }
-//
-//  page_id_t* pid;
-//  auto np=bpm->NewPageGuarded(pid);
+    //index++;
+    // for (index = 0; index < GetSize(); ++index) {
+    //     // if (comparator(KeyAt(index),key)  == 0) {
+    //     //     // Key already exists, return false
+    //     //     return false;
+    //     // }
+    //     if (comparator(KeyAt(index),key)>0) {
+    //         break;
+    //     }
+    // }
+
+    // Shift all elements after index to the right by 1
+    for (int i = GetSize(); i > index; --i) {
+        array_[i] = array_[i - 1];
+    }
+
+    // Insert new key-value pair
+    //SetValueAtIndex(index, std::make_pair(key, value));
+    array_[index]=std::make_pair(key, page_id);
+
+    // Increase the size by 1
+    IncreaseSize(1);
+
+    //return true;
 
 
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Search(const KeyType &key) -> int {
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Search(const KeyType &key,const KeyComparator &comparator) -> int {
 
 
-  return 0;
+    int left=1;int right=GetSize()-1;
+
+    while(left<=right){
+
+      int mid=(left+right)/2;
+
+      
+      if(comparator(array_[mid].first,key)<=0)left=mid+1;
+      else if(comparator(array_[mid].first,key)>0)right=mid-1;
+
+    }
+
+    return array_[right].second;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -88,14 +117,38 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::GetPointer(int index) -> page_id_t {
 
 
 
-  return 0;
+  return array_[index].second;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Split()->std::pair<KeyType,page_id_t> {
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Split(BufferPoolManager *bpm)->std::pair<KeyType,page_id_t> {
 
+  page_id_t pid;
+  auto guard= bpm->NewPageGuarded(&pid);
 
-    return std::pair<KeyType,page_id_t>(array_[0].first, array_[0].second);
+  
+  //根据page的大小以及key的大小，Max_Size>=3(Max_Size==2时不方便split)
+  int cutPos=(GetSize())/2;
+
+  
+
+  auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+  page->Init();
+
+  
+  
+  for(int i=cutPos+1;i<GetSize();i++){
+
+    page->array_[i-(cutPos+1)+1]=array_[i];
+  }
+
+   page->array_[0]=std::make_pair(KeyType{1}, array_[cutPos].second);
+
+  page->SetSize(GetSize()-1-cutPos);
+  SetSize(cutPos);
+
+   
+  return std::pair<KeyType,page_id_t>(array_[cutPos].first,pid);
 }
 
 // auto BPlusTreeInternalPage::Temp() ->int{

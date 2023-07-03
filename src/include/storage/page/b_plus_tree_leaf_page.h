@@ -86,8 +86,10 @@ class BPlusTreeLeafPage : public BPlusTreePage {
 
   //self-defined
 
-  auto Insert(const KeyType &key, const ValueType &value) ->bool;
-  auto Split()->std::pair<KeyType,page_id_t>;
+  auto Insert(const KeyType &key, const ValueType &value,const KeyComparator &comparator) ->bool;
+  auto Split(BufferPoolManager *bpm)->std::pair<KeyType,page_id_t>;
+  auto Search(const KeyType &key,const KeyComparator &comparator) -> int ;
+  auto Get(int index) -> ValueType;
 
  private:
   page_id_t next_page_id_;

@@ -119,7 +119,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::Split(BufferPoolManager *bpm)->std::pair<KeyTyp
   
 
   auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
-  page->Init();
+  page->Init(GetMaxSize());
   
   for(int i=cutPos+1;i<GetSize();i++){
 

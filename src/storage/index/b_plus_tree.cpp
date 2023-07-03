@@ -135,7 +135,7 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
     guard=bpm_->NewPageGuarded(&pid);
     header_page->root_page_id_=pid;
     auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
-    page->Init();
+    page->Init(leaf_max_size_);
     guard.Drop();
 
   }
@@ -152,7 +152,7 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
     guard=bpm_->NewPageGuarded(&new_pid);
     //header_page->root_page_id_=pid;
     auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
-    page->Init();
+    page->Init(internal_max_size_);
     page->Insert(0,pair.first, pair.second,comparator_);
     page->Insert(0,KeyType{1},pid,comparator_);
 

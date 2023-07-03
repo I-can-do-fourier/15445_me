@@ -108,7 +108,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Search(const KeyType &key,const KeyComparat
 
     }
 
-    return array_[right].second;
+    return right;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -133,7 +133,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Split(BufferPoolManager *bpm)->std::pair<Ke
   
 
   auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
-  page->Init();
+  page->Init(GetMaxSize());
 
   
   

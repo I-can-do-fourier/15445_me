@@ -92,7 +92,7 @@ auto BPLUSTREE_TYPE::GetValueHp(const KeyType &key, std::vector<ValueType> *resu
     auto pid=page->GetPointer(index);
     if(pid==INVALID_PAGE_ID)return false;
 
-    return GetValueHp(key, result, txn, page_id, ctx);
+    return GetValueHp(key, result, txn, pid, ctx);
 
     
 

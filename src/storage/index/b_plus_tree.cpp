@@ -42,6 +42,68 @@ auto BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   // Declaration of context instance.
   Context ctx;
   (void)ctx;
+
+
+  BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
+  auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
+
+  page_id_t pid=header_page->root_page_id_;
+
+  if(pid==INVALID_PAGE_ID) return false;
+
+  
+  auto res=GetValueHp(key,result,txn,pid,ctx);
+  
+  return res;
+}
+
+//self-defined
+
+INDEX_TEMPLATE_ARGUMENTS
+auto BPLUSTREE_TYPE::GetValueHp(const KeyType &key, std::vector<ValueType> *result,Transaction *txn,page_id_t &page_id,Context &ctx) -> bool {
+
+  auto guard=bpm_->FetchPageBasic(page_id);
+
+  auto p = guard.AsMut<BPlusTreePage>();
+
+  if(p->IsLeafPage()){
+
+    auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+
+    auto index=page->Search(key, comparator_);
+
+    if(index<0)return false;
+
+    result->push_back(page->Get(index)) ;
+
+    return true;
+  }else{
+
+    /**
+
+      因为BPLUSTREE_TYPE和BPlusTreeInternalPage的explicit template instantiation不同，
+      这里的ValueType要明确成page_id_t
+    */
+    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
+
+    auto index= page->Search(key,comparator_);
+
+    
+    if(index<0)return false;
+    //page->Temp();
+    //page->ToString();
+
+    auto pid=page->GetPointer(index);
+    if(pid==INVALID_PAGE_ID)return false;
+
+    return GetValueHp(key, result, txn, page_id, ctx);
+
+    
+
+
+  }
+
+  
   return false;
 }
 

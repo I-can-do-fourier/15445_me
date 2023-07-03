@@ -121,6 +121,7 @@ class BPlusTree {
 
   auto InsertHp(const KeyType &key, const ValueType &value, Transaction *txn,page_id_t &page_id,Context &ctx) -> std::pair<KeyType,page_id_t>;
   auto Search(const KeyType &key, MappingType* array, Transaction *txn,page_id_t &page_id,Context &ctx) -> int;
+  auto GetValueHp(const KeyType &key, std::vector<ValueType> *result,Transaction *txn,page_id_t &page_id,Context &ctx) -> bool;
 
  private:
   /* Debug Routines for FREE!! */

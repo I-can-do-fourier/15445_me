@@ -131,6 +131,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::Split(BufferPoolManager *bpm)->std::pair<KeyTyp
   page->SetSize(GetSize()-1-cutPos);
   SetSize(cutPos+1);
 
+  page->next_page_id_=next_page_id_;
   next_page_id_=pid;
 
    

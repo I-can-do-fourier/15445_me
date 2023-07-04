@@ -28,7 +28,7 @@ BPLUSTREE_TYPE::BPlusTree(std::string name, page_id_t header_page_id, BufferPool
  * Helper function to decide whether current b+tree is empty
  */
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::IsEmpty() const -> bool { return true; }
+auto BPLUSTREE_TYPE::IsEmpty() const -> bool { return false; }
 /*****************************************************************************
  * SEARCH
  *****************************************************************************/
@@ -506,7 +506,7 @@ auto BPLUSTREE_TYPE::DrawBPlusTree() -> std::string {
   std::ostringstream out_buf;
   p_root.Print(out_buf);
 
-  return out_buf.str();
+  return "\n"+out_buf.str();
 }
 
 INDEX_TEMPLATE_ARGUMENTS

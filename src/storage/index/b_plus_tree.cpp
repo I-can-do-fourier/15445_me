@@ -506,7 +506,15 @@ auto BPLUSTREE_TYPE::DrawBPlusTree() -> std::string {
   std::ostringstream out_buf;
   p_root.Print(out_buf);
 
-  return "\n"+out_buf.str();
+  return out_buf.str();
+}
+
+//self-defined
+INDEX_TEMPLATE_ARGUMENTS
+auto BPLUSTREE_TYPE::Real_DrawBPlusTree() -> std::string {
+
+
+    return "\n"+DrawBPlusTree();
 }
 
 INDEX_TEMPLATE_ARGUMENTS

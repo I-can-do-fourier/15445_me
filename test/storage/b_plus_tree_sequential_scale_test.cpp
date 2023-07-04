@@ -27,7 +27,7 @@ using bustub::DiskManagerUnlimitedMemory;
 /**
  * This test should be passing with your Checkpoint 1 submission.
  */
-TEST(BPlusTreeTests, ScaleTest) {  // NOLINT
+TEST(BPlusTreeTests, DISABLED_ScaleTest) {  // NOLINT
   // create KeyComparator and index schema
   auto key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema.get());
@@ -76,5 +76,74 @@ TEST(BPlusTreeTests, ScaleTest) {  // NOLINT
   bpm->UnpinPage(HEADER_PAGE_ID, true);
   delete transaction;
   delete bpm;
+}
+
+TEST(BPlusTreeTests, ScaleTest_My) {  // NOLINT
+    // create KeyComparator and index schema
+    auto key_schema = ParseCreateStatement("a bigint");
+    GenericComparator<8> comparator(key_schema.get());
+
+    auto disk_manager = std::make_unique<DiskManagerUnlimitedMemory>();
+    auto *bpm = new BufferPoolManager(30, disk_manager.get());
+
+    // create and fetch header_page
+    page_id_t page_id;
+    auto *header_page = bpm->NewPage(&page_id);
+    (void)header_page;
+
+    // create b+ tree
+    BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator, 2, 3);
+    GenericKey<8> index_key;
+    RID rid;
+    // create transaction
+    auto *transaction = new Transaction(0);
+
+    int64_t scale = 5000;
+    std::vector<int64_t> keys;
+    for (int64_t key = 1; key < scale; key++) {
+        keys.push_back(key);
+    }
+
+    // randomized the insertion order
+    auto rng = std::default_random_engine{};
+    std::shuffle(keys.begin(), keys.end(), rng);
+
+        GenericKey<8> init_key;
+        init_key.SetFromInteger(4477);
+        std::vector<RID> init_vec;
+    for (auto key : keys) {
+        init_vec.clear();
+
+        int64_t value = key & 0xFFFFFFFF;
+        rid.Set(static_cast<int32_t>(key >> 32), value);
+
+        index_key.SetFromInteger(key);
+        std::string g1;
+        if(tree.GetRootPageId()!=INVALID_PAGE_ID)g1=tree.DrawBPlusTree();
+        tree.Insert(index_key, rid, transaction);
+        std::string g2=tree.DrawBPlusTree();
+        tree.GetValue(init_key,&init_vec);
+        if(key!=4477&&init_vec.size()==0){
+
+            std::cout << g1 << "\n\n\n";
+            std::cout << g2 << "\n\n\n";
+        }
+    }
+    std::vector<RID> rids;
+
+    std::cout << tree.DrawBPlusTree() << "\n";
+    for (auto key : keys) {
+        rids.clear();
+        index_key.SetFromInteger(key);
+        tree.GetValue(index_key, &rids);
+        ASSERT_EQ(rids.size(), 1);
+
+        int64_t value = key & 0xFFFFFFFF;
+        ASSERT_EQ(rids[0].GetSlotNum(), value);
+    }
+
+    bpm->UnpinPage(HEADER_PAGE_ID, true);
+    delete transaction;
+    delete bpm;
 }
 }  // namespace bustub

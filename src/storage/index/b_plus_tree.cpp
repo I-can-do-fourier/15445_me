@@ -225,10 +225,10 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
 
             if(comparator_(key,new_p.first)<0)page->Insert(index+1,pair.first,pair.second,comparator_);
             else{
-                auto guard_temp=bpm_->FetchPageBasic(page_id);
+                auto guard_temp=bpm_->FetchPageBasic(new_p.second);
 
 
-                auto page_temp=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator> *>(guard.GetDataMut());
+                auto page_temp=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator> *>(guard_temp.GetDataMut());
 
                 auto pos=page_temp->Search(key,comparator_);
                 page_temp->Insert(pos+1,pair.first,pair.second,comparator_);

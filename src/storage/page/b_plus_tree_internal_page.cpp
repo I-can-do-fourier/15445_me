@@ -144,7 +144,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Split(BufferPoolManager *bpm)->std::pair<Ke
 
    page->array_[0]=std::make_pair(KeyType{1}, array_[cutPos].second);
 
-  page->SetSize(GetSize()-1-cutPos);
+  page->SetSize(GetSize()-cutPos);
   SetSize(cutPos);
 
    

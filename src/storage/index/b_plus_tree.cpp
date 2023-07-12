@@ -8,6 +8,8 @@
 #include "storage/index/b_plus_tree.h"
 #include "storage/page/page_guard.h"
 
+bool g_enable_logging_tree = true;
+
 namespace bustub {
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -19,6 +21,9 @@ BPLUSTREE_TYPE::BPlusTree(std::string name, page_id_t header_page_id, BufferPool
       leaf_max_size_(leaf_max_size),
       internal_max_size_(internal_max_size),
       header_page_id_(header_page_id) {
+
+    LogTree("BPlusTree","leaf_max_size_:",leaf_max_size,"internal_max_size_:",internal_max_size);
+
   WritePageGuard guard = bpm_->FetchPageWrite(header_page_id_);
   auto root_page = guard.AsMut<BPlusTreeHeaderPage>();
   root_page->root_page_id_ = INVALID_PAGE_ID;
@@ -119,6 +124,7 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
   Context ctx;
   (void)ctx;
 
+  LogTree("Insert","key:",key.ToString(),"value:",value.ToString());
 //  auto hd_guard=bpm_->FetchPageBasic(header_page_id_);
 //  auto it=reinterpret_cast<BPlusTreeHeaderPage *>(hd_guard.GetDataMut());
 
@@ -211,7 +217,7 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
 
     auto pair=InsertHp(key,value,txn,pid,ctx);
 
-    if(pair.second==INVALID_PAGE_ID)return std::pair<KeyType,page_id_t>(key,pid); 
+    if(pair.second==INVALID_PAGE_ID)return std::pair<KeyType,page_id_t>(key,pair.second); 
     
     if(pair.second!=pid){
       // page_id_t* new_pid;

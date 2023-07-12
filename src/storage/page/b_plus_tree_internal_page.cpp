@@ -151,11 +151,116 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Split(BufferPoolManager *bpm)->std::pair<Ke
   return std::pair<KeyType,page_id_t>(array_[cutPos].first,pid);
 }
 
-// auto BPlusTreeInternalPage::Temp() ->int{
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Split(BufferPoolManager *bpm,int flag)->std::pair<KeyType,page_id_t> {
+
+  page_id_t pid;
+  auto guard= bpm->NewPageGuarded(&pid);
+
+  
+  //根据page的大小以及key的大小，Max_Size>=3(Max_Size==2时不方便split)
+  int cutPos=(GetSize())/2;
+
+  /**
+          0      1 
+      (k1,p1) (k1,p1) 
+
+          0      1       2
+      (k1,p1) (k1,p1) (k1,p1)
+         
+  */
+  if(flag==1)cutPos++;
+
+  
+
+  auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+  page->Init(GetMaxSize());
+
+  
+  
+  for(int i=cutPos+1;i<GetSize();i++){
+
+    page->array_[i-(cutPos+1)+1]=array_[i];
+  }
+
+   page->array_[0]=std::make_pair(KeyType{1}, array_[cutPos].second);
+
+  page->SetSize(GetSize()-cutPos);
+  SetSize(cutPos);
+
+   
+  return std::pair<KeyType,page_id_t>(array_[cutPos].first,pid);
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::SplitAndInsert(BufferPoolManager *bpm,int index, const KeyType &key, page_id_t &page_id,const KeyComparator &comparator)->std::pair<KeyType,page_id_t> {
 
 
-//   return 0;
-// }
+
+
+    page_id_t pid;
+    auto guard= bpm->NewPageGuarded(&pid);
+
+
+    //根据page的大小以及key的大小，Max_Size>=3(Max_Size==2时不方便split)
+    int cutPos=(GetSize())/2;
+
+
+
+    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+    page->Init(GetMaxSize());
+
+
+
+    for(int i=cutPos+1;i<GetSize();i++){
+
+        page->array_[i-(cutPos+1)+1]=array_[i];
+    }
+
+    page->array_[0]=std::make_pair(KeyType{1}, array_[cutPos].second);
+
+    page->SetSize(GetSize()-cutPos);
+    SetSize(cutPos);
+
+    KeyType pivot= array_[cutPos].first;
+
+    if(index<cutPos){
+
+        Insert(index+1,key,page_id,comparator);
+        //SetSize(GetSize()+1);
+    }else{
+
+        int pos=page->Search(key,comparator);
+
+        page->Insert(pos+1,key,page_id,comparator);
+
+        //page->SetSize(page->GetSize()+1);
+    }
+
+
+
+    if(GetSize()<=1){
+
+        SetSize(GetSize()+1);
+
+
+
+        for(int i=1;i<page->GetSize();i++){
+
+            page->array_[i-1]=page->array_[i];
+        }
+
+        page->SetSize(page->GetSize()-1);
+
+
+        pivot=page->array_[0].first;
+        page->array_[0].first=KeyType{1};
+    }
+
+
+    return std::pair<KeyType,page_id_t>(pivot,pid);
+}
+
 
 // valuetype for internalNode should be page id_t
 template class BPlusTreeInternalPage<GenericKey<4>, page_id_t, GenericComparator<4>>;

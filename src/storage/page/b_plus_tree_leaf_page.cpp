@@ -37,6 +37,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(int max_size) {
   this->SetPageType(IndexPageType::LEAF_PAGE);
   this->SetSize(0);
   this->SetMaxSize(max_size);
+  this->next_page_id_=INVALID_PAGE_ID;
 
 }
 

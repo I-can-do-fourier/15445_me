@@ -28,6 +28,35 @@
 #include "storage/page/b_plus_tree_leaf_page.h"
 #include "storage/page/page_guard.h"
 
+#ifndef LOG_H_Tree
+#define LOG_H_Tree
+
+extern bool g_enable_logging_tree;
+
+template <typename T>
+void PrintArgTree(T arg)
+{
+  std::cout << arg;
+}
+
+template <typename T, typename... Args>
+void PrintArgTree(T arg, Args... args)
+{
+  std::cout << arg << ", ";
+  PrintArgTree(args...);
+}
+
+template <typename... Args>
+void LogTree(Args... args)
+{
+
+  if(!g_enable_logging_tree)return;
+  PrintArgTree(args...);
+  std::cout << std::endl;
+}
+
+#endif // LOG_H_Tree
+
 namespace bustub {
 
 struct PrintableBPlusTree;

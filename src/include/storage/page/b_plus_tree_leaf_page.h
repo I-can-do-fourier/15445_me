@@ -91,6 +91,9 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   auto Search(const KeyType &key,const KeyComparator &comparator) -> int ;
   auto Get(int index) -> ValueType;
 
+  void Delete(const KeyType &key, const KeyComparator &comparator);
+
+
  private:
   page_id_t next_page_id_;
   // Flexible array member for page data.

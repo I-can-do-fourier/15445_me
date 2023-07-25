@@ -153,6 +153,8 @@ class BPlusTree {
   auto GetValueHp(const KeyType &key, std::vector<ValueType> *result,Transaction *txn,page_id_t &page_id,Context &ctx) -> bool;
   auto Real_DrawBPlusTree() -> std::string;
 
+  void RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage* p,Context &ctx);
+
  private:
   /* Debug Routines for FREE!! */
   void ToGraph(page_id_t page_id, const BPlusTreePage *page, std::ofstream &out);

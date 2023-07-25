@@ -169,6 +169,39 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::Get(int index) -> ValueType{
   return array_[index].second;
 }
 
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_LEAF_PAGE_TYPE::Delete(const KeyType &key, const KeyComparator &comparator){
+
+
+    int left=0;int right=GetSize()-1;
+
+    while(left<=right){
+
+      int mid=(left+right)/2;
+
+      
+      if(comparator(array_[mid].first,key)<0)left=mid+1;
+      else if(comparator(array_[mid].first,key)>0)right=mid-1;
+      else {
+
+          int size=GetSize();
+          for (int i=mid+1;i<size;i++) {
+            
+                array_[i-1]=array_[i];
+          }
+
+          SetSize(GetSize()-1);
+
+          return;
+
+      }
+
+
+    }
+      
+
+}
+
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
 template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;

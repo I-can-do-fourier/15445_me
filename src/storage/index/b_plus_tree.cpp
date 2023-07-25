@@ -285,7 +285,87 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *txn) {
   // Declaration of context instance.
   Context ctx;
   (void)ctx;
+
+  BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
+  auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
+
+  page_id_t pid=header_page->root_page_id_;
+
+  BasicPageGuard guard;
+  if(pid==INVALID_PAGE_ID)return;
+
+  ctx.root_page_id_=pid;
+  //ctx.header_page_=std::move(hd_guard);
+
+    
+   auto gd=bpm_->FetchPageBasic(pid);
+
+   auto p = guard.AsMut<BPlusTreePage>();
+
+  RemoveHp(key,txn,p,ctx);//这个地方要用reference
+
+
 }
+
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage* p,Context &ctx){
+
+  
+
+  //auto guard=bpm_->FetchPageBasic(page_id);
+
+ // auto p = guard.AsMut<BPlusTreePage>();
+
+  if(p->IsLeafPage()){
+
+    auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(p);
+
+    page->Delete(key, comparator_);
+
+
+  }else{
+
+    /**
+
+      因为BPLUSTREE_TYPE和BPlusTreeInternalPage的explicit template instantiation不同，
+      这里的ValueType要明确成page_id_t
+    */
+    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(p);
+
+    auto index= page->Search(key,comparator_);
+
+
+    if(index<0)return;
+    //page->Temp();
+    //page->ToString();
+
+    auto pid=page->GetPointer(index);
+    if(pid==INVALID_PAGE_ID)return;
+
+    auto child_guard=bpm_->FetchPageBasic(pid);
+
+     BPlusTreePage* child= child_guard.template AsMut<BPlusTreePage>();
+
+    RemoveHp(key,txn,child,ctx);
+
+    if(child->IsLeafPage()&&child->GetSize()<(child->GetMaxSize())/2){
+
+
+
+    }else if((!child->IsLeafPage())&&child->GetSize()<(child->GetMaxSize()+1)/2){
+
+
+    }
+
+    
+
+
+
+  }
+
+} 
+
+
 
 /*****************************************************************************
  * INDEX ITERATOR

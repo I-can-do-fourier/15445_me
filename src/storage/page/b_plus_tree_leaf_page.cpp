@@ -203,6 +203,27 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Delete(const KeyType &key, const KeyComparator 
 }
 
 
+INDEX_TEMPLATE_ARGUMENTS
+static void Move(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2){
+
+
+
+      int idx=p1->GetSize();
+
+      
+  
+      for(int i=0;i<p2->GetSize();i++){
+        
+          p1->array_[idx++]=p2->array_[i];
+      }
+  
+      p1->SetSize(p1->GetSize()+p1->GetSize());
+      p2->SetSize(0);
+      
+
+}
+
+
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
 template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;
 template class BPlusTreeLeafPage<GenericKey<16>, RID, GenericComparator<16>>;

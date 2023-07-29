@@ -350,6 +350,41 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
     if(child->IsLeafPage()&&child->GetSize()<(child->GetMaxSize())/2){
 
+        //如果右侧有sliding node,先尝试将其合并到child中
+        if(index<page->GetSize()-1){
+
+            auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
+
+            BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+
+            if(child->GetSize()+child_next->GetSize()<child->GetMaxSize()){
+
+
+              return;
+            }
+
+            child_guard_next.Drop();
+        }
+
+        //如果左侧有sliding node, 尝试将child合并到该node中。
+        if(index>0){
+  
+            auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
+
+            BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+
+            if(child->GetSize()+child_prev->GetSize()<child->GetMaxSize()){
+
+
+              return;
+            }
+
+            child_guard_prev.Drop();
+
+        }
+
+        //re-distribute
+
 
 
     }else if((!child->IsLeafPage())&&child->GetSize()<(child->GetMaxSize()+1)/2){
@@ -365,7 +400,24 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
 } 
 
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator){
 
+
+
+      if(ch1->IsLeafPage()){
+
+
+      
+          parent->Delete(index+1, comparator);
+
+      }
+
+
+
+
+
+}
 
 /*****************************************************************************
  * INDEX ITERATOR

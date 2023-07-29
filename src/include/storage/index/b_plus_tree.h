@@ -155,6 +155,8 @@ class BPlusTree {
 
   void RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage* p,Context &ctx);
 
+  void Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator);
+
  private:
   /* Debug Routines for FREE!! */
   void ToGraph(page_id_t page_id, const BPlusTreePage *page, std::ofstream &out);

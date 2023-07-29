@@ -407,8 +407,14 @@ void BPLUSTREE_TYPE::Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator
 
       if(ch1->IsLeafPage()){
 
-
-      
+         
+         auto p1=reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(ch1);
+         auto p2=reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(ch2);   
+           
+         
+         B_PLUS_TREE_LEAF_PAGE_TYPE::Move(p1, p2);
+           
+          
           parent->Delete(index+1, comparator);
 
       }

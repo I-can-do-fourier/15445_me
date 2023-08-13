@@ -112,6 +112,8 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   void Delete(int index, const KeyComparator &comparator);
 
+  static void Move(B_PLUS_TREE_INTERNAL_PAGE_TYPE *p1,B_PLUS_TREE_INTERNAL_PAGE_TYPE *p2,const KeyType &key);
+
  MappingType* GetArray() { return array_; }
  const MappingType* GetArray() const { return array_; }
 

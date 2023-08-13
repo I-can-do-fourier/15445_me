@@ -6,6 +6,7 @@
 #include "common/logger.h"
 #include "common/rid.h"
 #include "storage/index/b_plus_tree.h"
+#include "storage/page/b_plus_tree_internal_page.h"
 #include "storage/page/page_guard.h"
 
 bool g_enable_logging_tree = true;
@@ -416,6 +417,14 @@ void BPLUSTREE_TYPE::Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator
            
           
           parent->Delete(index+1, comparator);
+
+      }else{
+
+         auto p1=reinterpret_cast<B_PLUS_TREE_INTERNAL_PAGE_TYPE *>(ch1);
+         auto p2=reinterpret_cast<B_PLUS_TREE_INTERNAL_PAGE_TYPE *>(ch2); 
+
+
+         
 
       }
 

@@ -277,6 +277,21 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Move(B_PLUS_TREE_INTERNAL_PAGE_TYPE *p1,B_PLUS_TREE_INTERNAL_PAGE_TYPE *p2,const KeyType &key){
 
 
+      int len2=p2->GetSize();
+
+      int index=p1->GetSize();
+      p1->array_[index].first=key;
+      p1->array_[index].second=p2->array_[0].second;
+      index++;
+      for(int i=1;i<len2;i++){
+
+          p1->array_[index++]=p2->array_[i];
+
+
+      }
+
+      p1->SetSize(p1->GetSize()+len2);
+      p2->SetSize(0);
 
 
 }

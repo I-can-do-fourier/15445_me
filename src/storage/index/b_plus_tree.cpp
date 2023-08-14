@@ -464,6 +464,7 @@ void BPLUSTREE_TYPE::Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator
 
          parent->Delete(index,comparator);
 
+
       }
 
 

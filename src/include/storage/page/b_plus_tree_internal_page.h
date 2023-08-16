@@ -110,7 +110,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   auto SplitAndInsert(BufferPoolManager *bpm,int index, const KeyType &key, page_id_t &page_id,const KeyComparator &comparator)->std::pair<KeyType,page_id_t>;
   //auto Temp() ->int;
 
-  void Delete(int index, const KeyComparator &comparator);
+  void Delete(int index,const KeyType &key, const KeyComparator &comparator);
 
   static void Move(B_PLUS_TREE_INTERNAL_PAGE_TYPE *p1,B_PLUS_TREE_INTERNAL_PAGE_TYPE *p2,const KeyType &key);
 

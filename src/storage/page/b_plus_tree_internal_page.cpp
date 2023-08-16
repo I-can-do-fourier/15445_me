@@ -263,7 +263,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::SplitAndInsert(BufferPoolManager *bpm,int i
 
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Delete(int index, const KeyComparator &comparator){
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Delete(int index,const KeyType &key, const KeyComparator &comparator){
 
     int size=GetSize();
 
@@ -271,6 +271,8 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Delete(int index, const KeyComparator &comp
 
             array_[i-1]=array_[i];
     }
+
+    array_[index-1].first=key;
 }
 
 INDEX_TEMPLATE_ARGUMENTS

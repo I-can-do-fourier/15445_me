@@ -395,9 +395,9 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
             auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
 
-            BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+            BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
 
-            if(child->GetSize()+child_next->GetSize()<child->GetMaxSize()){
+            if(child->GetSize()+child_next->GetSize()<=child->GetMaxSize()){
 
 
               return;
@@ -413,7 +413,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
             BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
-            if(child->GetSize()+child_prev->GetSize()<child->GetMaxSize()){
+            if(child->GetSize()+child_prev->GetSize()<=child->GetMaxSize()){
 
 
               return;
@@ -451,8 +451,8 @@ void BPLUSTREE_TYPE::Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator
          
          B_PLUS_TREE_LEAF_PAGE_TYPE::Move(p1, p2);
            
-          
-          parent->Delete(index+1, comparator);
+
+          parent->Delete(index+1, p1->KeyAt(0),comparator);
 
       }else{
 
@@ -462,7 +462,7 @@ void BPLUSTREE_TYPE::Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator
 
          BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> ::Move(p1,p2,parent->KeyAt(index+1));
 
-         parent->Delete(index,comparator);
+         parent->Delete(index+1,parent->KeyAt(index), comparator);
 
 
       }

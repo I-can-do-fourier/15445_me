@@ -384,7 +384,30 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
         }
 
-        //re-distribute
+        /**
+         *
+         * re-distribute
+         */
+
+          //可以推断出，左侧(或者右侧)node中entry的数量一定大于half,而且挪掉一个不会使它小于half.
+
+        if(index<page->GetSize()-1){
+
+            auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
+
+            BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+
+
+
+            return;
+
+        }
+
+
+        auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index-1));
+
+        BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+
 
 
 

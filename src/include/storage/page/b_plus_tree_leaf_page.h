@@ -94,7 +94,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   void Delete(const KeyType &key, const KeyComparator &comparator);
 
   static void Move(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2);
-
+  static void Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2,int type);
 
  private:
   page_id_t next_page_id_;

@@ -223,6 +223,61 @@ INDEX_TEMPLATE_ARGUMENTS
 
 }
 
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_LEAF_PAGE_TYPE::Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2,int type){
+
+
+
+  if(type==0){//右边sliding 合到左边
+
+    int rm=p2->GetMaxSize()/2;//将rm这么多的entry移到p1中
+
+
+    int idx1=p1->GetSize();
+
+    for(int i=0;i<rm;i++){
+
+
+      p1->array_[idx1++]=p2->array_[i];
+
+
+    }
+
+    int len=p2->GetSize();
+    for(int i=rm;i<len;i++){
+
+      p2->array_[i-rm]=p2->array_[rm];
+    }
+
+
+    p1->SetSize(p1->GetSize()+rm);
+    p2->SetSize(len-rm);
+
+  }else{//左边的sliding移到右边
+
+      int rm=p1->GetMaxSize()/2;
+
+      for(int i=p2->GetSize()-1+rm;i>=0;i--){
+
+          p2->array_[i]=p2->array_[i-rm];
+      }
+
+      int p1_size=p1->GetSize();
+      for(int i=0;i<rm;i++){
+
+          p2->array_[i]=p2->array_[p1_size-rm+i];
+
+      }
+
+      p1->SetSize(p1->GetSize()-rm);
+      p2->SetSize(p2->GetSize()+rm);
+
+  }
+
+
+
+}
+
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
 template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;

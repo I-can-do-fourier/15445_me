@@ -404,9 +404,9 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
         }
 
 
-        auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index-1));
+        auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
 
-        BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+        BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
 
 
@@ -434,7 +434,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
             auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
 
-            BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+            BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
 
             if(child->GetSize()+child_prev->GetSize()<=child->GetMaxSize()){
 
@@ -448,6 +448,23 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
           //re-distribute
 
+
+          if(index<page->GetSize()-1){
+
+            auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
+
+            BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+
+
+
+            return;
+
+          }
+
+
+          auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
+
+          BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
 
     }
@@ -489,6 +506,42 @@ void BPLUSTREE_TYPE::Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator
 
 
       }
+
+
+
+
+
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::Redistribute(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator,int type){
+
+
+
+  if(ch1->IsLeafPage()){
+
+
+    auto p1=reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(ch1);
+    auto p2=reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(ch2);
+
+
+    B_PLUS_TREE_LEAF_PAGE_TYPE::Redistribute(p1, p2,type);
+
+
+    parent->Delete(index+1, p1->KeyAt(0),comparator);
+
+  }else{
+
+    auto p1=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>  *>(ch1);
+    auto p2=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>  *>(ch2);
+
+
+    BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> ::Redistribute(p1,p2,parent->KeyAt(index+1));
+
+    parent->Delete(index+1,parent->KeyAt(index), comparator);
+
+
+  }
 
 
 

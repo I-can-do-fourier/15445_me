@@ -114,6 +114,8 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   static void Move(B_PLUS_TREE_INTERNAL_PAGE_TYPE *p1,B_PLUS_TREE_INTERNAL_PAGE_TYPE *p2,const KeyType &key);
 
+  static void Redistribute(B_PLUS_TREE_INTERNAL_PAGE_TYPE *p1,B_PLUS_TREE_INTERNAL_PAGE_TYPE *p2,const KeyType &key,int type);
+
  MappingType* GetArray() { return array_; }
  const MappingType* GetArray() const { return array_; }
 

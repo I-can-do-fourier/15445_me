@@ -246,7 +246,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_P
     int len=p2->GetSize();
     for(int i=rm;i<len;i++){
 
-      p2->array_[i-rm]=p2->array_[rm];
+      p2->array_[i-rm]=p2->array_[i];
     }
 
 

@@ -517,6 +517,7 @@ INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::Redistribute(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator,int type){
 
 
+  //redistribute 过程中要考虑parent entry的改变
 
   if(ch1->IsLeafPage()){
 
@@ -536,7 +537,7 @@ void BPLUSTREE_TYPE::Redistribute(BPlusTreeInternalPage<KeyType,page_id_t,KeyCom
     auto p2=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>  *>(ch2);
 
 
-    BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> ::Redistribute(p1,p2,parent->KeyAt(index+1));
+    BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> ::Redistribute(p1,p2,parent->KeyAt(index+1),type);
 
     parent->Delete(index+1,parent->KeyAt(index), comparator);
 

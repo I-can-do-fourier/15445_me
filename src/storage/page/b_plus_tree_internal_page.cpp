@@ -298,6 +298,63 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Move(B_PLUS_TREE_INTERNAL_PAGE_TYPE *p1,B_P
 
 }
 
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Redistribute(B_PLUS_TREE_INTERNAL_PAGE_TYPE *p1,B_PLUS_TREE_INTERNAL_PAGE_TYPE *p2,const KeyType &key,int type){
+
+
+  if(type==0){
+
+
+      int rm=p2->GetMaxSize()/2;//将rm这么多的entry移到p1中
+
+
+      int idx1=p1->GetSize();
+
+      for(int i=0;i<rm;i++){
+
+
+        p1->array_[idx1++]=p2->array_[i];
+
+
+      }
+
+      int len=p2->GetSize();
+      for(int i=rm;i<len;i++){
+
+        p2->array_[i-rm]=p2->array_[i];
+      }
+
+      p1->SetKeyAt(p1->GetSize(),key);
+      p1->SetSize(p1->GetSize()+rm);
+      p2->SetSize(len-rm);
+
+  }else{
+
+      int rm=p1->GetMaxSize()/2;
+
+
+
+      for(int i=p2->GetSize()-1+rm;i>=rm;i--){
+
+        p2->array_[i]=p2->array_[i-rm];
+      }
+
+      int p1_size=p1->GetSize();
+      for(int i=0;i<rm;i++){
+
+        p2->array_[i]=p2->array_[p1_size-rm+i];
+
+      }
+
+      p2->SetKeyAt(rm,key);
+      p1->SetSize(p1->GetSize()-rm);
+      p2->SetSize(p2->GetSize()+rm);
+
+  }
+
+
+}
+
 // valuetype for internalNode should be page id_t
 template class BPlusTreeInternalPage<GenericKey<4>, page_id_t, GenericComparator<4>>;
 template class BPlusTreeInternalPage<GenericKey<8>, page_id_t, GenericComparator<8>>;

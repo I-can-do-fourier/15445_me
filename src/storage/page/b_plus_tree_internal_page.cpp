@@ -305,8 +305,9 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Redistribute(B_PLUS_TREE_INTERNAL_PAGE_TYPE
   if(type==0){
 
 
-      int rm=p2->GetMaxSize()/2;//将rm这么多的entry移到p1中
+      //int rm=p2->GetMaxSize()/2;//将rm这么多的entry移到p1中
 
+      int rm=1;
 
       int idx1=p1->GetSize();
 
@@ -330,9 +331,9 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Redistribute(B_PLUS_TREE_INTERNAL_PAGE_TYPE
 
   }else{
 
-      int rm=p1->GetMaxSize()/2;
+      //int rm=p1->GetMaxSize()/2;
 
-
+      int rm=1;
 
       for(int i=p2->GetSize()-1+rm;i>=rm;i--){
 

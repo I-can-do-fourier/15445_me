@@ -219,7 +219,8 @@ INDEX_TEMPLATE_ARGUMENTS
   
       p1->SetSize(p1->GetSize()+p2->GetSize());
       p2->SetSize(0);
-      
+
+      p1->next_page_id_=p2->next_page_id_;
 
 }
 

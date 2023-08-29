@@ -24,6 +24,14 @@ shell_process2 = subprocess.Popen(
 def send_command(command):
     shell_process.stdin.write(command + "\n")
     shell_process.stdin.flush()
+
+    # output=''
+    # while True:
+    #     st=shell_process.stdout.readline()
+    #     if st !='\0':
+    #         output=output+st
+    #     else: break
+
     output = shell_process.stdout.readline()
     return output
 

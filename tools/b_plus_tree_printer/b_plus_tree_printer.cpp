@@ -121,6 +121,15 @@ auto main(int argc, char **argv) -> int {
       case '?':
         std::cout << UsageMessage();
         break;
+
+      case 's':
+
+        std::cin >> filename;
+        tree.Draw(bpm, filename);
+
+        system((std::string("dot -Tpng -O ")+filename).c_str());
+        system((std::string("open -a preview ./")+filename).c_str());
+
       default:
         std::cin.ignore(256, '\n');
         std::cout << UsageMessage();

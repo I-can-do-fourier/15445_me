@@ -301,9 +301,15 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *txn) {
     
    auto gd=bpm_->FetchPageBasic(pid);
 
-   auto p = guard.AsMut<BPlusTreePage>();
+   auto p = gd.AsMut<BPlusTreePage>();
 
   RemoveHp(key,txn,p,ctx);//这个地方要用reference
+
+  if(!p->IsLeafPage()&&p->GetSize()==1){
+
+        auto pp=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(p);
+        header_page->root_page_id_=pp->GetPointer(0);
+  }
 
 
 }

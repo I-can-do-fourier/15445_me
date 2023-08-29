@@ -273,6 +273,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Delete(int index,const KeyType &key, const 
     }
 
     array_[index-1].first=key;
+    IncreaseSize(-1);
 }
 
 INDEX_TEMPLATE_ARGUMENTS

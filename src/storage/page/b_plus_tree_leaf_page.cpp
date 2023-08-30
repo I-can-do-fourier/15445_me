@@ -231,8 +231,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_P
 
   if(type==0){//右边sliding 合到左边
 
-    int rm=p2->GetMaxSize()/2;//将rm这么多的entry移到p1中
-
+    //int rm=p2->GetSize()/2;//将rm这么多的entry移到p1中
+    int rm=1;
 
     int idx1=p1->GetSize();
 
@@ -256,9 +256,9 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_P
 
   }else{//左边的sliding移到右边
 
-      int rm=p1->GetMaxSize()/2;
-
-      for(int i=p2->GetSize()-1+rm;i>=0;i--){
+      //int rm=p1->GetSize()/2;
+      int rm=1;
+      for(int i=p2->GetSize()-1+rm;i>=rm;i--){
 
           p2->array_[i]=p2->array_[i-rm];
       }
@@ -266,7 +266,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_P
       int p1_size=p1->GetSize();
       for(int i=0;i<rm;i++){
 
-          p2->array_[i]=p2->array_[p1_size-rm+i];
+          p2->array_[i]=p1->array_[p1_size-rm+i];
 
       }
 

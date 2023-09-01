@@ -95,6 +95,9 @@ class BPlusTreeLeafPage : public BPlusTreePage {
 
   static void Move(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2);
   static void Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2,int type);
+  auto GetEntry(int index) ->MappingType &;
+
+  auto SearchLow(const KeyType &key,const KeyComparator &comparator) -> int ;
 
  private:
   page_id_t next_page_id_;

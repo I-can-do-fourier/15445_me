@@ -15,16 +15,77 @@ INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE::IndexIterator() = default;
 
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE::~IndexIterator() = default;  // NOLINT
+INDEXITERATOR_TYPE::IndexIterator(page_id_t page_id,BufferPoolManager *bpm,int idx){
+
+  bpm_=bpm;
+  pid=page_id;
+  index=idx;
+  if(page_id!=INVALID_PAGE_ID)node=GetNode(pid);
+
+}
 
 INDEX_TEMPLATE_ARGUMENTS
-auto INDEXITERATOR_TYPE::IsEnd() -> bool { throw std::runtime_error("unimplemented"); }
+INDEXITERATOR_TYPE::~IndexIterator() {
+
+
+  if(pid!=INVALID_PAGE_ID){
+
+    bpm_->UnpinPage(pid, false);
+  }
+
+}// NOLINT
 
 INDEX_TEMPLATE_ARGUMENTS
-auto INDEXITERATOR_TYPE::operator*() -> const MappingType & { throw std::runtime_error("unimplemented"); }
+auto INDEXITERATOR_TYPE::IsEnd() -> bool {
+
+  if(pid==INVALID_PAGE_ID)return true;
+
+  return false;
+
+}
 
 INDEX_TEMPLATE_ARGUMENTS
-auto INDEXITERATOR_TYPE::operator++() -> INDEXITERATOR_TYPE & { throw std::runtime_error("unimplemented"); }
+auto INDEXITERATOR_TYPE::operator*() -> const MappingType & {
+
+  return node->GetEntry(index);
+
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+auto INDEXITERATOR_TYPE::operator++() -> INDEXITERATOR_TYPE & {
+
+  if(index>=node->GetSize()){
+
+      page_id_t  next=node->GetNextPageId();
+      bpm_->UnpinPage(pid, false);
+
+      pid=next;
+      index=0;
+
+      if(pid!=INVALID_PAGE_ID){
+
+        node=GetNode(pid);
+      }
+
+      return *this;
+  }
+
+  return *this;
+}
+
+//self defined
+
+INDEX_TEMPLATE_ARGUMENTS
+auto INDEXITERATOR_TYPE::GetNode(page_id_t page_id) -> B_PLUS_TREE_LEAF_PAGE_TYPE * {
+
+  auto page=bpm_->FetchPage(page_id);
+  //page->RLatch();
+
+  return  reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
+
+
+
+}
 
 template class IndexIterator<GenericKey<4>, RID, GenericComparator<4>>;
 

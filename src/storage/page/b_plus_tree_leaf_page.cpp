@@ -279,6 +279,37 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_P
 
 }
 
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::GetEntry(int index) ->MappingType &{
+
+  return array_[index];
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::SearchLow(const KeyType &key,const KeyComparator &comparator) -> int{
+
+
+
+  int left=0;int right=GetSize()-1;
+
+  while(left<=right){
+
+    int mid=(left+right)/2;
+
+
+    if(comparator(array_[mid].first,key)<0)left=mid+1;
+    else if(comparator(array_[mid].first,key)>=0)right=mid-1;
+    else return mid;
+
+
+  }
+
+  if(left>=GetSize())return -1;
+
+
+  return left;
+
+}
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
 template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;

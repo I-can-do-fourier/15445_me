@@ -157,6 +157,11 @@ class BPlusTree {
 
   void Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator);
   void Redistribute(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator,int type);
+
+  auto GetPid(int type, page_id_t page_id,const KeyType &key=KeyType{0}) -> page_id_t;
+
+  auto GetPidPair(int type, page_id_t page_id,const KeyType &key=KeyType{0}) -> std::pair<page_id_t,int>;
+
  private:
   /* Debug Routines for FREE!! */
   void ToGraph(page_id_t page_id, const BPlusTreePage *page, std::ofstream &out);

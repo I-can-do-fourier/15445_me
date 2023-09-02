@@ -239,7 +239,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::SplitAndInsert(BufferPoolManager *bpm,int i
 
 
 
-    if(GetSize()<=1){
+    if(GetSize()<(GetMaxSize()+1)/2){
 
         SetSize(GetSize()+1);
 

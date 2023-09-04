@@ -344,7 +344,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Redistribute(B_PLUS_TREE_INTERNAL_PAGE_TYPE
       int p1_size=p1->GetSize();
       for(int i=0;i<rm;i++){
 
-        p2->array_[i]=p2->array_[p1_size-rm+i];
+        p2->array_[i]=p1->array_[p1_size-rm+i];
 
       }
 

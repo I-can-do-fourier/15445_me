@@ -159,6 +159,16 @@ TEST(BPlusTreeTests, DeleteTest2) {
   delete bpm;
 }
 
+/**
+ *
+ * 1.firstly, insert keys
+ * 2.random insert/delete
+ *
+ * may repeat insert and delete void keys
+ *
+ *
+ *
+ */
 TEST(BPlusTreeTests, DeleteTest2_me) {
   // create KeyComparator and index schema
   auto key_schema = ParseCreateStatement("a bigint");
@@ -170,7 +180,7 @@ TEST(BPlusTreeTests, DeleteTest2_me) {
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,3,5);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,17,33);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -271,9 +281,15 @@ TEST(BPlusTreeTests, DeleteTest2_me) {
       tree.GetValue(index_key, &res);
 
       std::cout<<"to insert repeat"<<" "<<key<<std::endl;
+
+      if(key==858){
+
+        tree.Draw(bpm, "../../my-tree.dot");
+      }
       EXPECT_EQ(res.size(), 1);
       res.clear();
 
+      inserted.insert(key);
       outsides.erase(key);
     }else{
 
@@ -289,6 +305,8 @@ TEST(BPlusTreeTests, DeleteTest2_me) {
       std::cout<<"to delete repeat"<<" "<<key<<std::endl;
       EXPECT_EQ(res.size(), 0);
       res.clear();
+
+      inserted.erase(key);
 
     }
 

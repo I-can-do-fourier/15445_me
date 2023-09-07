@@ -9,7 +9,7 @@
 #include "storage/page/b_plus_tree_internal_page.h"
 #include "storage/page/page_guard.h"
 
-bool g_enable_logging_tree = true;
+bool g_enable_logging_tree = false;
 
 namespace bustub {
 
@@ -125,7 +125,8 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
   Context ctx;
   (void)ctx;
 
-  LogTree("Insert","key:",key.ToString(),"value:",value.ToString());
+  //LogTree("Insert","key:",key.ToString(),"value:",value.ToString(),"thread:",std::this_thread::get_id());
+  //LogTree("Insert","key:",key.ToString());
 //  auto hd_guard=bpm_->FetchPageBasic(header_page_id_);
 //  auto it=reinterpret_cast<BPlusTreeHeaderPage *>(hd_guard.GetDataMut());
 
@@ -286,7 +287,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *txn) {
   // Declaration of context instance.
   Context ctx;
   (void)ctx;
-  LogTree("Delete","key:",key.ToString());
+  //LogTree("Delete","key:",key.ToString());
   BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
   auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
 
@@ -327,8 +328,19 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
     auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(p);
 
-    page->Delete(key, comparator_);
+    auto success=page->Delete(key, comparator_);
 
+    if(comparator_(key,KeyType{75})==0){
+
+      LogTree("75:",success);
+      //std::cout<<"75:"<<success<<std::endl;
+    }
+
+    if(comparator_(key,KeyType{3})==0){
+
+      //std::cout<<"3:"<<success<<std::endl;
+      LogTree("3:",success);
+    }
 
   }else{
 
@@ -459,7 +471,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
             auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
 
-            BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+            BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
 
 
             Redistribute(page,child,child_next,index,comparator_,0);
@@ -470,7 +482,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
           auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
 
-          BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
+          BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
           Redistribute(page,child_prev,child,index-1,comparator_,1);
 
     }
@@ -580,6 +592,59 @@ auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE {
   //  auto hd_guard=bpm_->FetchPageBasic(header_page_id_);
   //  auto it=reinterpret_cast<BPlusTreeHeaderPage *>(hd_guard.GetDataMut());
 
+  std::vector<ValueType> res;
+
+  int64_t t=3;
+  KeyType key;
+  key.SetFromInteger(t);
+  LogTree(key.ToString());
+  //std::cout<<key.ToString()<<std::endl;
+  GetValue(key,&res);
+  //std::cout<<res.size()<<std::endl;
+  LogTree(res.size());
+  res.clear();
+
+  t=74;
+  key.SetFromInteger(t);
+  LogTree(key.ToString());
+  //std::cout<<key.ToString()<<std::endl;
+  GetValue(key,&res);
+  //std::cout<<res.size()<<std::endl;
+  LogTree(res.size());
+
+  res.clear();
+
+
+
+  t=75;
+  key.SetFromInteger(t);
+  LogTree(key.ToString());
+  //std::cout<<key.ToString()<<std::endl;
+  GetValue(key,&res);
+  //std::cout<<res.size()<<std::endl;
+  LogTree(res.size());
+
+  res.clear();
+
+  t=4;
+  LogTree(key.ToString());
+  //std::cout<<key.ToString()<<std::endl;
+  GetValue(key,&res);
+  //std::cout<<res.size()<<std::endl;
+  LogTree(res.size());
+
+  res.clear();
+
+  t=4;
+  key.SetFromInteger(t);
+  LogTree(key.ToString());
+  //std::cout<<key.ToString()<<std::endl;
+  GetValue(key,&res);
+  //std::cout<<res.size()<<std::endl;
+  LogTree(res.size());
+
+  res.clear();
+
   BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
   auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
 
@@ -593,6 +658,7 @@ auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE {
 
 
   }
+
 
 
 
@@ -612,7 +678,7 @@ auto BPLUSTREE_TYPE::Begin() -> INDEXITERATOR_TYPE {
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::Begin(const KeyType &key) -> INDEXITERATOR_TYPE {
 
-  LogTree("Begin key");
+  LogTree("Begin key",key.ToString());
   //  auto hd_guard=bpm_->FetchPageBasic(header_page_id_);
   //  auto it=reinterpret_cast<BPlusTreeHeaderPage *>(hd_guard.GetDataMut());
 
@@ -654,7 +720,7 @@ auto BPLUSTREE_TYPE::End() -> INDEXITERATOR_TYPE {
 //self-defined
 
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::GetPid(int type, page_id_t page_id,const KeyType &key=KeyType{0}) -> page_id_t {
+auto BPLUSTREE_TYPE::GetPid(int type, page_id_t page_id,const KeyType &key) -> page_id_t {
 
   auto guard=bpm_->FetchPageBasic(page_id);
 
@@ -685,7 +751,7 @@ auto BPLUSTREE_TYPE::GetPid(int type, page_id_t page_id,const KeyType &key=KeyTy
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto BPLUSTREE_TYPE::GetPidPair(int type, page_id_t page_id,const KeyType &key=KeyType{0}) -> std::pair<page_id_t,int> {
+auto BPLUSTREE_TYPE::GetPidPair(int type, page_id_t page_id,const KeyType &key) -> std::pair<page_id_t,int> {
 
   auto guard=bpm_->FetchPageBasic(page_id);
 

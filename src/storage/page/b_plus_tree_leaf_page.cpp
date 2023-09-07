@@ -170,7 +170,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::Get(int index) -> ValueType{
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::Delete(const KeyType &key, const KeyComparator &comparator){
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::Delete(const KeyType &key, const KeyComparator &comparator) ->bool{
 
 
     int left=0;int right=GetSize()-1;
@@ -192,13 +192,14 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Delete(const KeyType &key, const KeyComparator 
 
           SetSize(GetSize()-1);
 
-          return;
+          return true;
 
       }
 
 
     }
-      
+
+    return  false;
 
 }
 

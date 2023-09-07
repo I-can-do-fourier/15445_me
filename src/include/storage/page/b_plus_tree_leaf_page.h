@@ -91,7 +91,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   auto Search(const KeyType &key,const KeyComparator &comparator) -> int ;
   auto Get(int index) -> ValueType;
 
-  void Delete(const KeyType &key, const KeyComparator &comparator);
+  auto Delete(const KeyType &key, const KeyComparator &comparator)-> bool ;
 
   static void Move(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2);
   static void Redistribute(B_PLUS_TREE_LEAF_PAGE_TYPE *p1,B_PLUS_TREE_LEAF_PAGE_TYPE *p2,int type);

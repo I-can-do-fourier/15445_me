@@ -124,12 +124,13 @@ auto main(int argc, char **argv) -> int {
 
       case 's':
 
-        std::cin >> filename;
+        //std::cin >> filename;
         tree.Draw(bpm, filename);
-
+        filename="my-tree.dot";
         system((std::string("dot -Tpng -O ")+filename).c_str());
-        system((std::string("open -a preview ./")+filename).c_str());
+        system((std::string("open -a preview ./")+filename+std::string(".png")).c_str());
 
+        break;
       default:
         std::cin.ignore(256, '\n');
         std::cout << UsageMessage();

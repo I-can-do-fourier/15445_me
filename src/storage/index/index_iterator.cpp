@@ -47,12 +47,20 @@ auto INDEXITERATOR_TYPE::IsEnd() -> bool {
 INDEX_TEMPLATE_ARGUMENTS
 auto INDEXITERATOR_TYPE::operator*() -> const MappingType & {
 
+  //auto pair=node->GetEntry(index);
+  //std::cout<<"iter:"<<pid<<" "<<index<<" "<<pair.first.ToString()<<std::endl;
+  //LogTree("Insert","key:",key.ToString());
   return node->GetEntry(index);
 
 }
 
 INDEX_TEMPLATE_ARGUMENTS
 auto INDEXITERATOR_TYPE::operator++() -> INDEXITERATOR_TYPE & {
+
+  index++;
+
+  //auto pair=node->GetEntry(index);
+  //std::cout<<"iter:"<<pid<<" "<<index<<" " <<std::endl;
 
   if(index>=node->GetSize()){
 
@@ -81,7 +89,22 @@ auto INDEXITERATOR_TYPE::GetNode(page_id_t page_id) -> B_PLUS_TREE_LEAF_PAGE_TYP
   auto page=bpm_->FetchPage(page_id);
   //page->RLatch();
 
-  return  reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
+  auto n=  reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
+
+  int size=n->GetSize();
+
+  std::string s="";
+  for(int i=0;i<size;i++){
+
+    s=s+std::to_string( n->GetEntry(i).first.ToString())+" ";
+
+  }
+
+  //std::cout<<"node:"<<page_id<<" "<<"size:"<<size<<std::endl;
+  //std::cout<<"elements::"<<s<<std::endl;
+
+
+  return n;
 
 
 

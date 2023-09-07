@@ -33,9 +33,21 @@ class IndexIterator {
 
   auto operator++() -> IndexIterator &;
 
-  auto operator==(const IndexIterator &itr) const -> bool { throw std::runtime_error("unimplemented"); }
+  auto operator==(const IndexIterator &itr) const -> bool {
 
-  auto operator!=(const IndexIterator &itr) const -> bool { throw std::runtime_error("unimplemented"); }
+    if(itr.pid==INVALID_PAGE_ID&&pid==INVALID_PAGE_ID)return true;
+    else if(itr.pid!=INVALID_PAGE_ID&&pid!=INVALID_PAGE_ID&&itr.pid==pid&&itr.index==index)return true;
+
+
+    return false;
+  }
+
+  auto operator!=(const IndexIterator &itr) const -> bool {
+
+
+        return !(itr==*this);
+
+  }
 
   //self defined
 

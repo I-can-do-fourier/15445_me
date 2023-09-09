@@ -21,6 +21,7 @@ INDEXITERATOR_TYPE::IndexIterator(page_id_t page_id,BufferPoolManager *bpm,int i
   pid=page_id;
   index=idx;
   if(page_id!=INVALID_PAGE_ID)node=GetNode(pid);
+  if(node!= nullptr&&node->GetSize()==0)pid=INVALID_PAGE_ID;
 
 }
 

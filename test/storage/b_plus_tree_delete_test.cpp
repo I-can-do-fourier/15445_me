@@ -396,6 +396,49 @@ TEST(BPlusTreeTests, DeleteTest2_me) {
 
   EXPECT_EQ(total,inserted.size());
 
+
+  std::set<int64_t> order;
+
+  for(int64_t t:inserted)order.insert(t);
+
+  for(int i=0;i<20;i++){
+
+
+
+    auto it=order.begin();
+    int index = std::rand() % order.size();
+    //int index=0;
+    std::advance(it,index);
+    //std::cout<<*it<<std::endl;
+    int64_t key=*it;
+
+    it=order.lower_bound(key);
+
+    index_key.SetFromInteger(key);
+    auto it_tree_mid=tree.Begin(index_key);
+
+    while(it_tree_mid!=tree.End()){
+
+      int64_t k=(*it_tree_mid).first.ToString();
+
+      tree.GetValue((*it_tree_mid).first, &res);
+      EXPECT_EQ(res.size(), 1);
+
+      res.clear();
+
+      int64_t kk=*it;
+      EXPECT_EQ(k, kk);
+
+      ++it_tree_mid;
+      ++it;
+
+    }
+
+    EXPECT_EQ(it_tree_mid, tree.End());
+    EXPECT_EQ(it, order.end());
+
+  }
+
   std::vector<RID> rids;
 
 
@@ -426,7 +469,7 @@ TEST(BPlusTreeTests, DeleteTest2_me2) {
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,16,33);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,93,42);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -780,6 +823,49 @@ TEST(BPlusTreeTests, DeleteTest2_me2) {
 
   EXPECT_EQ(total,inserted.size());
 
+
+  std::set<int64_t> order;
+
+  for(int64_t t:inserted)order.insert(t);
+
+  for(int i=0;i<20;i++){
+
+
+
+    auto it=order.begin();
+    int index = std::rand() % order.size();
+    //int index=0;
+    std::advance(it,index);
+    //std::cout<<*it<<std::endl;
+    int64_t key=*it;
+
+    it=order.lower_bound(key);
+
+    index_key.SetFromInteger(key);
+    auto it_tree_mid=tree.Begin(index_key);
+
+    while(it_tree_mid!=tree.End()){
+
+      int64_t k=(*it_tree_mid).first.ToString();
+
+      tree.GetValue((*it_tree_mid).first, &res);
+      EXPECT_EQ(res.size(), 1);
+
+      res.clear();
+
+      int64_t kk=*it;
+      EXPECT_EQ(k, kk);
+
+      ++it_tree_mid;
+      ++it;
+
+    }
+
+    EXPECT_EQ(it_tree_mid, tree.End());
+    EXPECT_EQ(it, order.end());
+
+  }
+
   std::vector<RID> rids;
 
 
@@ -811,7 +897,7 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,47,36);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,93,94);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -1237,6 +1323,51 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
 
   EXPECT_EQ(total,inserted.size());
 
+
+  std::set<int64_t> order;
+
+  for(int64_t t:inserted)order.insert(t);
+
+  int64_t min_number=*(order.begin())-100;
+  int64_t max_number=6500;
+  for(int64_t i=min_number;i<=max_number;i++){
+
+
+
+//    auto it=order.begin();
+//    int index = std::rand() % order.size();
+//    //int index=0;
+//    std::advance(it,index);
+    //std::cout<<*it<<std::endl;
+    int64_t key=i;
+
+    auto it=order.lower_bound(key);
+
+    index_key.SetFromInteger(key);
+    auto it_tree_mid=tree.Begin(index_key);
+
+    while(it_tree_mid!=tree.End()){
+
+      int64_t k=(*it_tree_mid).first.ToString();
+
+      tree.GetValue((*it_tree_mid).first, &res);
+      EXPECT_EQ(res.size(), 1);
+
+      res.clear();
+
+      int64_t kk=*it;
+      EXPECT_EQ(k, kk);
+
+      ++it_tree_mid;
+      ++it;
+
+    }
+
+    EXPECT_EQ(it_tree_mid, tree.End());
+    EXPECT_EQ(it, order.end());
+
+  }
+
   std::vector<RID> rids;
 
 
@@ -1267,7 +1398,7 @@ TEST(BPlusTreeTests, DeleteTest2_me4) {
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,74,51);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,102,93);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -1696,6 +1827,50 @@ TEST(BPlusTreeTests, DeleteTest2_me4) {
   }
 
   EXPECT_EQ(total,inserted.size());
+
+  std::set<int64_t> order;
+
+  for(int64_t t:inserted)order.insert(t);
+
+  int64_t min_number=-200;
+  int64_t max_number=6500;
+  for(int64_t i=min_number;i<=max_number;i++){
+
+
+
+    //    auto it=order.begin();
+    //    int index = std::rand() % order.size();
+    //    //int index=0;
+    //    std::advance(it,index);
+    //std::cout<<*it<<std::endl;
+    int64_t key=i;
+
+    auto it=order.lower_bound(key);
+
+    index_key.SetFromInteger(key);
+    auto it_tree_mid=tree.Begin(index_key);
+
+    while(it_tree_mid!=tree.End()){
+
+      int64_t k=(*it_tree_mid).first.ToString();
+
+      tree.GetValue((*it_tree_mid).first, &res);
+      EXPECT_EQ(res.size(), 1);
+
+      res.clear();
+
+      int64_t kk=*it;
+      EXPECT_EQ(k, kk);
+
+      ++it_tree_mid;
+      ++it;
+
+    }
+
+    EXPECT_EQ(it_tree_mid, tree.End());
+    EXPECT_EQ(it, order.end());
+
+  }
 
   std::vector<RID> rids;
 

@@ -93,7 +93,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(int index, const KeyType &key,page_i
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Search(const KeyType &key,const KeyComparator &comparator) -> int {
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Search(const KeyType &key,const KeyComparator &comparator) const -> int {
 
 
     int left=1;int right=GetSize()-1;
@@ -112,7 +112,7 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::Search(const KeyType &key,const KeyComparat
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::GetPointer(int index) -> page_id_t {
+auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::GetPointer(int index) const -> page_id_t {
 
 
 

@@ -222,4 +222,19 @@ struct PrintableBPlusTree {
   }
 };
 
+
+class ReadPopBackGuard {
+ private:
+  std::deque<ReadPageGuard>& dequeRef;
+
+ public:
+  ReadPopBackGuard(std::deque<ReadPageGuard>& d) : dequeRef(d) {}
+
+  ~ReadPopBackGuard() {
+    if (!dequeRef.empty()) {
+      dequeRef.pop_back();
+    }
+  }
+};
+
 }  // namespace bustub

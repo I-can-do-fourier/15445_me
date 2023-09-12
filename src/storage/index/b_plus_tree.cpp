@@ -49,15 +49,17 @@ auto BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   Context ctx;
   (void)ctx;
 
+  ctx.read_set_.push_back(bpm_->FetchPageRead(header_page_id_));
+  auto &hd_guard = ctx.read_set_.back();
 
-  BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
-  auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
+  auto header_page = hd_guard.As<BPlusTreeHeaderPage>();
 
   page_id_t pid=header_page->root_page_id_;
 
   if(pid==INVALID_PAGE_ID) return false;
 
-  
+
+  ctx.root_page_id_=pid;
   auto res=GetValueHp(key,result,txn,pid,ctx);
   
   return res;
@@ -68,13 +70,18 @@ auto BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::GetValueHp(const KeyType &key, std::vector<ValueType> *result,Transaction *txn,page_id_t &page_id,Context &ctx) -> bool {
 
-  auto guard=bpm_->FetchPageBasic(page_id);
+  //auto guard=bpm_->FetchPageRead(page_id);
+  ctx.read_set_.push_back(bpm_->FetchPageRead(page_id));
+  auto &guard=ctx.read_set_.back();
 
-  auto p = guard.AsMut<BPlusTreePage>();
+  ReadPopBackGuard bg(ctx.read_set_);
+
+  auto p = guard.As<BPlusTreePage>();
 
   if(p->IsLeafPage()){
 
-    auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
+    //auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetData());
+    auto page=guard.As<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
     auto index=page->Search(key, comparator_);
 
@@ -86,8 +93,8 @@ auto BPLUSTREE_TYPE::GetValueHp(const KeyType &key, std::vector<ValueType> *resu
   }else{
 
    
-    auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
-
+    //auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
+    auto page=guard.As<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>>();
     auto index= page->Search(key,comparator_);
 
     

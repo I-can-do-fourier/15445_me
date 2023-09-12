@@ -140,7 +140,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::Split(BufferPoolManager *bpm)->std::pair<KeyTyp
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_LEAF_PAGE_TYPE::Search(const KeyType &key,const KeyComparator &comparator) -> int{
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::Search(const KeyType &key,const KeyComparator &comparator) const -> int{
 
 
     
@@ -163,7 +163,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::Search(const KeyType &key,const KeyComparator &
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_LEAF_PAGE_TYPE::Get(int index) -> ValueType{
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::Get(int index) const -> ValueType{
 
 
   return array_[index].second;

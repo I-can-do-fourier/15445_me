@@ -88,8 +88,8 @@ class BPlusTreeLeafPage : public BPlusTreePage {
 
   auto Insert(const KeyType &key, const ValueType &value,const KeyComparator &comparator) ->bool;
   auto Split(BufferPoolManager *bpm)->std::pair<KeyType,page_id_t>;
-  auto Search(const KeyType &key,const KeyComparator &comparator) -> int ;
-  auto Get(int index) -> ValueType;
+  auto Search(const KeyType &key,const KeyComparator &comparator) const -> int ;
+  auto Get(int index) const -> ValueType;
 
   auto Delete(const KeyType &key, const KeyComparator &comparator)-> bool ;
 

@@ -104,7 +104,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   auto Search(const KeyType &key,const KeyComparator &comparator) const -> int ;
   void Insert(int index, const KeyType &key, page_id_t &page_id,const KeyComparator &comparator);
-  auto GetPointer(int index) const -> static page_id_t;
+  auto GetPointer(int index) const ->  page_id_t;
   auto Split(BufferPoolManager *bpm)->std::pair<KeyType,page_id_t>;
   auto Split(BufferPoolManager *bpm,int flag)->std::pair<KeyType,page_id_t>;
   auto SplitAndInsert(BufferPoolManager *bpm,int index, const KeyType &key, page_id_t &page_id,const KeyComparator &comparator)->std::pair<KeyType,page_id_t>;

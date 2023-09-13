@@ -74,7 +74,14 @@ auto BPLUSTREE_TYPE::GetValueHp(const KeyType &key, std::vector<ValueType> *resu
   ctx.read_set_.push_back(bpm_->FetchPageRead(page_id));
   auto &guard=ctx.read_set_.back();
 
-  ReadPopBackGuard bg(ctx.read_set_);
+  while(ctx.read_set_.size()>1){
+
+    ReadPageGuard &gd=ctx.read_set_.front();
+    gd.Drop();
+    ctx.read_set_.pop_front();
+  }
+
+  //ReadPopBackGuard bg(ctx.read_set_);
 
   auto p = guard.As<BPlusTreePage>();
 

@@ -143,8 +143,9 @@ auto BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
   //LogTree("Insert","key:",key.ToString());
 //  auto hd_guard=bpm_->FetchPageBasic(header_page_id_);
 //  auto it=reinterpret_cast<BPlusTreeHeaderPage *>(hd_guard.GetDataMut());
+  ctx.header_page_=bpm_->FetchPageWrite(header_page_id_);
+  WritePageGuard &hd_guard =*ctx.header_page_;
 
-  BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
   auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
 
   page_id_t pid=header_page->root_page_id_;
@@ -191,7 +192,8 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
   // Declaration of context instance.
 
 
-  auto guard=bpm_->FetchPageBasic(page_id);
+  ctx.write_set_.push_back(bpm_->FetchPageWrite(page_id));
+  auto &guard=ctx.write_set_.back();
 
   auto p = guard.AsMut<BPlusTreePage>();
 
@@ -199,7 +201,28 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
 
     auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(guard.GetDataMut());
 
+
+    if(page->GetSize()<page->GetMaxSize()-1){
+
+      if(ctx.header_page_ !=std::nullopt){
+
+        (*ctx.header_page_).Drop();
+        ctx.header_page_=std::nullopt;
+
+      }
+
+
+      while(ctx.write_set_.size()>1){
+
+        WritePageGuard &gd=ctx.write_set_.front();
+        gd.Drop();
+        ctx.write_set_.pop_front();
+      }
+    }
+
     auto res=page->Insert(key, value,comparator_);
+
+
 
     if(!res)return std::pair<KeyType,page_id_t>(key,INVALID_PAGE_ID);
 
@@ -222,13 +245,36 @@ auto BPLUSTREE_TYPE::InsertHp(const KeyType &key, const ValueType &value, Transa
     */
     auto page=reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(guard.GetDataMut());
 
+
+    if(page->GetSize()<page->GetMaxSize()){
+
+      if(ctx.header_page_ !=std::nullopt){
+
+        (*ctx.header_page_).Drop();
+        ctx.header_page_=std::nullopt;
+
+      }
+
+       while(ctx.write_set_.size()>1){
+
+         WritePageGuard &gd=ctx.write_set_.front();
+         gd.Drop();
+         ctx.write_set_.pop_front();
+       }
+
+    }
+
     auto index= page->Search(key,comparator_);
 
     if(index<0)return std::pair<KeyType,page_id_t>(key,INVALID_PAGE_ID);
     //page->Temp();
     //page->ToString();
 
+
+
     auto pid=page->GetPointer(index);
+
+
     if(pid==INVALID_PAGE_ID)return std::pair<KeyType,page_id_t>(key,pid);
 
     auto pair=InsertHp(key,value,txn,pid,ctx);

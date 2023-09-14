@@ -955,10 +955,26 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
   std::vector<RID> res;
 
   int count=0;
+
+  //int zz=0;
   for (auto cmd : cmds) {
 
     count++;
     int64_t key;
+
+//    index_key.SetFromInteger(3148);
+//    tree.GetValue(index_key, &res);
+//
+//    int d=res.size()-zz;
+//
+//    if(d==-1){
+//      printf("haha");
+//    }
+//
+//    zz=res.size();
+//    res.clear();
+
+
     if(cmd==1) {
 
       key=*it_keys;
@@ -967,7 +983,7 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
       inserted.insert(key);
       outsides.erase(key);
 
-      //std::cout<<"to insert"<<" "<<key<<std::endl;
+      std::cout<<"to insert"<<" "<<key<<std::endl;
     }else if(cmd==0){
 
 
@@ -981,7 +997,7 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
       //std::cout<<*it<<std::endl;
       key=*it;
       //std::cout<<inserted.size()<<" "<<key<<std::endl;
-      //std::cout<<"to delete"<<" "<<key<<std::endl;
+      std::cout<<"to delete"<<" "<<key<<std::endl;
       inserted.erase(it);
 
       outsides.insert(key);
@@ -997,7 +1013,7 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
       index_key.SetFromInteger(key);
       tree.GetValue(index_key, &res);
 
-      //std::cout<<"to insert repeat"<<" "<<key<<std::endl;
+      std::cout<<"to insert repeat"<<" "<<key<<std::endl;
 
       if(key==858){
 
@@ -1019,7 +1035,7 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
 
       index_key.SetFromInteger(key);
       tree.GetValue(index_key, &res);
-      //std::cout<<"to delete repeat"<<" "<<key<<std::endl;
+      std::cout<<"to delete repeat"<<" "<<key<<std::endl;
       EXPECT_EQ(res.size(), 0);
       res.clear();
 

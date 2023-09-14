@@ -348,7 +348,9 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *txn) {
   Context ctx;
   (void)ctx;
   //LogTree("Delete","key:",key.ToString());
-  BasicPageGuard hd_guard = bpm_->FetchPageBasic(header_page_id_);
+
+  ctx.header_page_=bpm_->FetchPageWrite(header_page_id_);
+  WritePageGuard &hd_guard = *ctx.header_page_;
   auto header_page = hd_guard.AsMut<BPlusTreeHeaderPage>();
 
   page_id_t pid=header_page->root_page_id_;
@@ -359,12 +361,14 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *txn) {
   ctx.root_page_id_=pid;
   //ctx.header_page_=std::move(hd_guard);
 
-    
-   auto gd=bpm_->FetchPageBasic(pid);
+   ctx.write_set_.push_back(bpm_->FetchPageWrite(pid));
+   auto &gd=ctx.write_set_.back();
 
    auto p = gd.AsMut<BPlusTreePage>();
 
-  RemoveHp(key,txn,p,ctx);//这个地方要用reference
+
+   ctx.root_page_id_=pid;
+  RemoveHp(key,txn,p,pid,ctx);//这个地方要用reference
 
   if(!p->IsLeafPage()&&p->GetSize()==1){
 
@@ -376,7 +380,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *txn) {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage* p,Context &ctx){
+void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage* p,page_id_t PID,Context &ctx){
 
   
 
@@ -387,6 +391,25 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
   if(p->IsLeafPage()){
 
     auto page=reinterpret_cast<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator> *>(p);
+
+    if(!ctx.IsRootPage(PID)&&page->GetSize()-1>=(page->GetMaxSize())/2){
+
+      if(ctx.header_page_ !=std::nullopt){
+
+        (*ctx.header_page_).Drop();
+        ctx.header_page_=std::nullopt;
+
+      }
+
+
+      while(ctx.write_set_.size()>1){
+
+        WritePageGuard &gd=ctx.write_set_.front();
+        gd.Drop();
+        ctx.write_set_.pop_front();
+      }
+
+    }
 
     auto success=page->Delete(key, comparator_);
 
@@ -413,6 +436,25 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
     auto index= page->Search(key,comparator_);
 
+    if((ctx.IsRootPage(PID)&&page->GetSize()>2)||(!ctx.IsRootPage(PID)&&page->GetSize()-1>=(page->GetMaxSize()+1)/2)){
+
+
+        if(ctx.header_page_ !=std::nullopt){
+
+          (*ctx.header_page_).Drop();
+          ctx.header_page_=std::nullopt;
+
+       }
+
+
+        while(ctx.write_set_.size()>1){
+
+          WritePageGuard &gd=ctx.write_set_.front();
+          gd.Drop();
+          ctx.write_set_.pop_front();
+       }
+
+    }
 
     if(index<0)return;
     //page->Temp();
@@ -421,18 +463,19 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
     auto pid=page->GetPointer(index);
     if(pid==INVALID_PAGE_ID)return;
 
-    auto child_guard=bpm_->FetchPageBasic(pid);
+    ctx.write_set_.push_back(bpm_->FetchPageWrite(pid));
+    auto &child_guard=ctx.write_set_.back();
 
      BPlusTreePage* child= child_guard.template AsMut<BPlusTreePage>();
 
-    RemoveHp(key,txn,child,ctx);
+    RemoveHp(key,txn,child,pid,ctx);
 
     if(child->IsLeafPage()&&child->GetSize()<(child->GetMaxSize())/2){
 
         //如果右侧有sliding node,先尝试将其合并到child中
         if(index<page->GetSize()-1){
 
-            auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
+            auto child_guard_next=bpm_->FetchPageWrite(page->GetPointer(index+1));
 
             BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
@@ -448,7 +491,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
         //如果左侧有sliding node, 尝试将child合并到该node中。
         if(index>0){
   
-            auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
+            auto child_guard_prev=bpm_->FetchPageWrite(page->GetPointer(index-1));
 
             BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
@@ -471,7 +514,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
         if(index<page->GetSize()-1){
 
-            auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
+            auto child_guard_next=bpm_->FetchPageWrite(page->GetPointer(index+1));
 
             BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
@@ -482,7 +525,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
         }
 
 
-        auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
+        auto child_guard_prev=bpm_->FetchPageWrite(page->GetPointer(index-1));
 
         BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeLeafPage<KeyType,ValueType,KeyComparator>>();
 
@@ -494,7 +537,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
           //如果右侧有sliding node,先尝试将其合并到child中
           if(index<page->GetSize()-1){
 
-            auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
+            auto child_guard_next=bpm_->FetchPageWrite(page->GetPointer(index+1));
 
             BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
 
@@ -510,7 +553,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
           //如果左侧有sliding node, 尝试将child合并到该node中。
           if(index>0){
 
-            auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
+            auto child_guard_prev=bpm_->FetchPageWrite(page->GetPointer(index-1));
 
             BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
 
@@ -529,7 +572,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
 
           if(index<page->GetSize()-1){
 
-            auto child_guard_next=bpm_->FetchPageBasic(page->GetPointer(index+1));
+            auto child_guard_next=bpm_->FetchPageWrite(page->GetPointer(index+1));
 
             BPlusTreePage* child_next= child_guard_next.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
 
@@ -540,7 +583,7 @@ void BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
           }
 
 
-          auto child_guard_prev=bpm_->FetchPageBasic(page->GetPointer(index-1));
+          auto child_guard_prev=bpm_->FetchPageWrite(page->GetPointer(index-1));
 
           BPlusTreePage* child_prev= child_guard_prev.template AsMut<BPlusTreeInternalPage<KeyType,page_id_t ,KeyComparator>>();
           Redistribute(page,child_prev,child,index-1,comparator_,1);

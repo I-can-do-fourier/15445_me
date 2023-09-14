@@ -153,7 +153,7 @@ class BPlusTree {
   auto GetValueHp(const KeyType &key, std::vector<ValueType> *result,Transaction *txn,page_id_t &page_id,Context &ctx) -> bool;
   auto Real_DrawBPlusTree() -> std::string;
 
-  void RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage* p,Context &ctx);
+  void RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage* p,page_id_t PID,Context &ctx);
 
   void Merge(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator);
   void Redistribute(BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>* parent,BPlusTreePage* ch1,BPlusTreePage* ch2,int index,const KeyComparator &comparator,int type);

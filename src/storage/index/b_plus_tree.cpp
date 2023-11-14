@@ -483,7 +483,8 @@ auto BPLUSTREE_TYPE::RemoveHp(const KeyType &key, Transaction *txn,BPlusTreePage
      //auto child_guard=bpm_->FetchPageWrite(pid);
 
      BPlusTreePage* child= child_guard.template AsMut<BPlusTreePage>();
-
+    //the child may be modified(e.g.,size decrease,) in the following recursions by other threads, so we should save the needed parameters first.
+     //and the parent node itself may have been changed.
      auto ch_size=child->GetSize();
      auto ch_max=child->GetMaxSize();
      auto is_leaf=child->IsLeafPage();

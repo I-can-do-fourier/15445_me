@@ -897,7 +897,7 @@ TEST(BPlusTreeTests, DeleteTest2_me3) {
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,3,3);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,74,93);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -1414,7 +1414,7 @@ TEST(BPlusTreeTests, DeleteTest2_me4) {
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,102,93);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", header_page->GetPageId(), bpm, comparator,73,104);
   GenericKey<8> index_key;
   RID rid;
   // create transaction

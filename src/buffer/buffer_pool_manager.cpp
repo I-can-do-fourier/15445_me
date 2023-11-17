@@ -28,6 +28,7 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
 
   // we allocate a consecutive memory space for the buffer pool
   pages_ = new Page[pool_size_];
+  p_latch_=new std::mutex[pool_size];
   replacer_ = std::make_unique<LRUKReplacer>(pool_size, replacer_k);
 
   // Initially, every page is in the free list.
@@ -38,7 +39,10 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
   LOG("BufferPoolManager","pool_size",pool_size,"replacer_k",replacer_k);
 }
 
-BufferPoolManager::~BufferPoolManager() { delete[] pages_; }
+BufferPoolManager::~BufferPoolManager() {
+  delete[] pages_;
+  delete[] p_latch_;
+}
 
 /**
  *
@@ -93,10 +97,13 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
 
 auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType access_type) -> Page * {
 
-  const std::lock_guard<std::mutex> lock(latch_);
+  //const std::lock_guard<std::mutex> lock(latch_);
+  latch_.lock();
   LOG("FetchPage",page_id);
   if(page_table_.find(page_id)!=page_table_.end()){
+    frame_id_t fid=page_table_.at(page_id);
 
+    p_latch_[fid].lock();
     Page& page=pages_[page_table_.at(page_id)];
     page.pin_count_++;// fetch要将pin+1
 
@@ -105,6 +112,8 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
     replacer_->RecordAccess(page_table_.at(page_id));
 
     LOG("PagePin",page.page_id_,page.pin_count_);
+    p_latch_[fid].unlock();
+    latch_.unlock();
     return &page;
   }
 
@@ -118,28 +127,45 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
 
     replacer_->Evict(&fid);
     LOG("EvictPage",fid,pages_[fid].page_id_,page_id);
-  }else return nullptr;
+  }else {
+
+    latch_.unlock();
+    return nullptr;
+  }
 
 
   LOG("FetchPage replace",pages_[fid].page_id_);
-  if(pages_[fid].is_dirty_) disk_manager_->WritePage(pages_[fid].page_id_,pages_[fid].GetData());
-  page_table_.erase(pages_[fid].page_id_);
+  page_id_t old_pid=pages_[fid].page_id_;
+  bool old_dirty=pages_[fid].is_dirty_;
+  page_table_.erase(old_pid);
 
   Page* page=&pages_[fid];
-
-  page->ResetMemory();
   page->page_id_=page_id;
   page->is_dirty_=false;
   page->pin_count_=1;
-  LOG("PagePin",page->page_id_,page->pin_count_);
-  disk_manager_->ReadPage(page_id,page->data_);//将page中的数据从disk中读出来。
-  LOG("ReadPage",std::string(page->data_));
   page_table_[page_id]=fid;
-  LOG("NewPage","set table",page_id);
   replacer_->SetEvictable(fid,false);
+
+
+
+  if(old_dirty) disk_manager_->WritePage(old_pid,pages_[fid].GetData());
+
+
+  p_latch_[fid].lock();
+  latch_.unlock();
+
+  page->ResetMemory();
+
+//  LOG("PagePin",page->page_id_,page->pin_count_);
+  disk_manager_->ReadPage(page_id,page->data_);//将page中的数据从disk中读出来。
+//  LOG("ReadPage",std::string(page->data_));
+//
+//  LOG("NewPage","set table",page_id);
+
 
   replacer_->RecordAccess(fid);
 
+  p_latch_[fid].unlock();
   return page;
 }
 
@@ -187,6 +213,7 @@ auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
   }
   if(page_table_.find(page_id)==page_table_.end()){
 
+
     LOG("FlushPage","NO PAGE",page_id);
     latch_.unlock();
     return false;
@@ -195,6 +222,7 @@ auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
 
 
   auto fid=page_table_.at(page_id);
+  p_latch_[fid].lock();
   Page& page=pages_[fid];
 
 
@@ -203,10 +231,12 @@ auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
   char* data=new char[BUSTUB_PAGE_SIZE];
   std::memcpy(data, page.GetData(), BUSTUB_PAGE_SIZE);
   page.is_dirty_= false;
-  latch_.unlock();
+
 
   disk_manager_->WritePage(page_id,data);
 
+  p_latch_[fid].unlock();
+  latch_.unlock();
   delete [] data;
 //  page.page_id_=INVALID_PAGE_ID;
 //  page_table_.erase(page_id);

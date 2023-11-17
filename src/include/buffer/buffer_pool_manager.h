@@ -192,6 +192,8 @@ class BufferPoolManager {
   std::list<frame_id_t> free_list_;
   /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
   std::mutex latch_;
+  std::mutex *p_latch_;
+  std::unordered_map<page_id_t,std::mutex> temp_latch_;
   //std::mutex latch_flush_;
 
   /**

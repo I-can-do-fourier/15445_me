@@ -178,15 +178,17 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
 
 auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
 
-  const std::lock_guard<std::mutex> lock(latch_);
+  latch_.lock();
   LOG("FlushPage",page_id);
   if(page_id==INVALID_PAGE_ID){
     LOG("FlushPage","INVALID_PAGE_ID",page_id);
+    latch_.unlock();
     return false;
   }
   if(page_table_.find(page_id)==page_table_.end()){
 
     LOG("FlushPage","NO PAGE",page_id);
+    latch_.unlock();
     return false;
   }
 
@@ -195,8 +197,17 @@ auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
   auto fid=page_table_.at(page_id);
   Page& page=pages_[fid];
 
-  disk_manager_->WritePage(page_id,page.GetData());
+
+
+
+  char* data=new char[BUSTUB_PAGE_SIZE];
+  std::memcpy(data, page.GetData(), BUSTUB_PAGE_SIZE);
   page.is_dirty_= false;
+  latch_.unlock();
+
+  disk_manager_->WritePage(page_id,data);
+
+  delete [] data;
 //  page.page_id_=INVALID_PAGE_ID;
 //  page_table_.erase(page_id);
 

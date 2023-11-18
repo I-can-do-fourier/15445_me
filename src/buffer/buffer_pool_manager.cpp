@@ -49,8 +49,9 @@ BufferPoolManager::~BufferPoolManager() {
  * 新增一个page，目前只是逻辑上的新增,disk还没有变化。frame数量不变
  */
 auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
-  const std::lock_guard<std::mutex> lock(latch_);
   LOG("NewPage");
+  const std::lock_guard<std::mutex> lock(latch_);
+
   frame_id_t fid;
   if(!free_list_.empty()){
 
@@ -87,6 +88,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   LOG("NewPage","set table",pid);
   replacer_->SetEvictable(fid,false);
 
+  LOG("NewPage,RecordAccess");
   replacer_->RecordAccess(fid);
 
 
@@ -98,8 +100,18 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
 auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType access_type) -> Page * {
 
   //const std::lock_guard<std::mutex> lock(latch_);
-  latch_.lock();
   LOG("FetchPage",page_id);
+  latch_.lock();
+
+
+  if(temp_latch_.find(page_id)!=temp_latch_.end()){
+
+    LOG("FetchPage1",page_id);
+    temp_latch_[page_id].lock();
+    temp_latch_[page_id].unlock();
+    temp_latch_.erase(page_id);
+    LOG("FetchPage2",page_id);
+  }
   if(page_table_.find(page_id)!=page_table_.end()){
     frame_id_t fid=page_table_.at(page_id);
 
@@ -108,7 +120,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
     page.pin_count_++;// fetch要将pin+1
 
     replacer_->SetEvictable(page_table_.at(page_id),false);
-
+    LOG("FetchPage,RecordAccess");
     replacer_->RecordAccess(page_table_.at(page_id));
 
     LOG("PagePin",page.page_id_,page.pin_count_);
@@ -147,12 +159,15 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   replacer_->SetEvictable(fid,false);
 
 
+  p_latch_[fid].lock();
+  std::mutex &mut=temp_latch_[old_pid];
+  mut.lock();
+  latch_.unlock();
+
 
   if(old_dirty) disk_manager_->WritePage(old_pid,pages_[fid].GetData());
 
-
-  p_latch_[fid].lock();
-  latch_.unlock();
+  mut.unlock();
 
   page->ResetMemory();
 
@@ -162,16 +177,19 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
 //
 //  LOG("NewPage","set table",page_id);
 
-
+  LOG("FetchPage RecordAccess2",pages_[fid].page_id_);
   replacer_->RecordAccess(fid);
-
+  LOG("FetchPage RecordAccess3",pages_[fid].page_id_);
   p_latch_[fid].unlock();
+  LOG("FetchPage RecordAccess4",pages_[fid].page_id_);
   return page;
 }
 
 auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unused]] AccessType access_type) -> bool {
-  const std::lock_guard<std::mutex> lock(latch_);
+
   LOG("UnpinPage",page_id,is_dirty);
+  const std::lock_guard<std::mutex> lock(latch_);
+
   if(page_table_.find(page_id)==page_table_.end())return false;
 
   auto it=page_table_.find(page_id);
@@ -179,7 +197,7 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
   Page& page=pages_[fid];
 
 
-
+  LOG("UnpinPage1",page_id,is_dirty);
   if(page.GetPinCount()==0)return false;
 
   page.pin_count_--;
@@ -204,8 +222,9 @@ auto BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty, [[maybe_unus
 
 auto BufferPoolManager::FlushPage(page_id_t page_id) -> bool {
 
-  latch_.lock();
   LOG("FlushPage",page_id);
+  latch_.lock();
+
   if(page_id==INVALID_PAGE_ID){
     LOG("FlushPage","INVALID_PAGE_ID",page_id);
     latch_.unlock();

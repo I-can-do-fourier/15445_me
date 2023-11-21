@@ -103,7 +103,7 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   LOG("FetchPage",page_id);
   latch_.lock();
 
-
+  //if there is lock for the page_id, it means that the page(disk page) has been evicted from the buffer pool and may be being written to disk.
   if(temp_latch_.find(page_id)!=temp_latch_.end()){
 
     LOG("FetchPage1",page_id);
@@ -159,10 +159,10 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType
   replacer_->SetEvictable(fid,false);
 
 
-  p_latch_[fid].lock();
-  std::mutex &mut=temp_latch_[old_pid];
+  p_latch_[fid].lock();//lock the current page(buffer page), in case of other threads trying to fetch the same page.
+  std::mutex &mut=temp_latch_[old_pid];//retrieve the mutex here in case of getting wrong reasons when other threads try to update the map
   mut.lock();
-  latch_.unlock();
+  latch_.unlock();//unlock the latch here only affect the current page_id and old page_id, because we need to read/write the corresponding data from/to disk.
 
 
   if(old_dirty) disk_manager_->WritePage(old_pid,pages_[fid].GetData());
